@@ -8,12 +8,13 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- 界面只有简体中文和英文，都是从左往右写：关闭 RTL，阿拉伯语、希伯来语系统下显示的英文界面不做左右镜像 -->
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:supportsRtl="true"
+        android:supportsRtl="false"
         android:theme="@style/Theme.CineGL">
         <activity
             android:name=".MainActivity"
