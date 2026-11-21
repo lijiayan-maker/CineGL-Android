@@ -167,7 +167,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                         availableFps = listOf(24, 25, 30, 60).filter { f -> caps.supportsFps(f) }.ifEmpty { listOf(30) },
                         uhdAvailable = uhd,
                         ispLogAvailable = caps.tonemapCurve && caps.maxCurvePoints >= 2,
-                        zoomPresets = zoomPresets(caps.zoomRange),
+                        zoomPresets = zoomPresets(caps.zoomRange.lower, caps.zoomRange.upper),
                     )
                 }
                 pushRenderParams()

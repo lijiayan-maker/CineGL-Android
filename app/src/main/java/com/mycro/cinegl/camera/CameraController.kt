@@ -312,7 +312,11 @@ class CameraController(context: Context) {
             val frameNs = 1_000_000_000L / cfg.fps
             // 录像时快门不能慢于一帧；拍照预览放宽到 1/15s
             val maxExposure = if (cfg.video) frameNs else 66_666_666L
-            val (iso, exposure) = resolveExposure(c, caps.isoRange, caps.exposureRange, maxExposure, meteredProduct, caps.evStep)
+            val (iso, exposure) = resolveExposure(
+                c, caps.isoRange.lower, caps.isoRange.upper,
+                caps.exposureRange.lower, minOf(caps.exposureRange.upper, maxExposure),
+                meteredProduct, caps.evStep,
+            )
             b.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
             b.set(CaptureRequest.SENSOR_SENSITIVITY, iso)
             b.set(CaptureRequest.SENSOR_EXPOSURE_TIME, exposure)

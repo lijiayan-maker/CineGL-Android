@@ -1,6 +1,5 @@
 package com.mycro.cinegl.camera
 
-import android.util.Range
 import android.util.Size
 import kotlin.math.abs
 import kotlin.math.pow
@@ -43,20 +42,20 @@ data class Readout(
  */
 fun resolveExposure(
     c: CameraControls,
-    isoRange: Range<Int>,
-    exposureRange: Range<Long>,
-    maxExposureNs: Long,
+    isoMin: Int,
+    isoMax: Int,
+    exposureMinNs: Long,
+    exposureMaxNs: Long,
     meteredProduct: Double,
     evStep: Float,
 ): Pair<Int, Long> {
     val target = meteredProduct * 2.0.pow((c.evIndex * evStep).toDouble())
-    val maxExp = minOf(exposureRange.upper, maxExposureNs)
-    var iso = c.iso.coerceIn(isoRange.lower, isoRange.upper)
-    var exp = c.exposureNs.coerceIn(exposureRange.lower, maxExp)
+    var iso = c.iso.coerceIn(isoMin, isoMax)
+    var exp = c.exposureNs.coerceIn(exposureMinNs, exposureMaxNs)
     if (c.isoAuto && !c.shutterAuto) {
-        iso = (target / exp).roundToInt().coerceIn(isoRange.lower, isoRange.upper)
+        iso = (target / exp).roundToInt().coerceIn(isoMin, isoMax)
     } else if (!c.isoAuto && c.shutterAuto) {
-        exp = (target / iso).roundToLong().coerceIn(exposureRange.lower, maxExp)
+        exp = (target / iso).roundToLong().coerceIn(exposureMinNs, exposureMaxNs)
     }
     return iso to exp
 }
@@ -65,27 +64,35 @@ fun resolveExposure(
  * 选相机流尺寸：拍照用 4:3（和传感器一致，全幅取景）；录像按画幅选 16:9 或 4:3，
  * 短边尽量等于目标（1080 / 2160），找不到就取不超过目标的最大一个。
  */
-fun chooseStreamSize(sizes: List<Size>, aspect: Float, targetShort: Int): Size? {
-    val matching = sizes.filter { abs(it.width.toFloat() / it.height - aspect) < 0.02f }
-    val pool = matching.ifEmpty { sizes }
-    return pool.firstOrNull { minOf(it.width, it.height) == targetShort }
-        ?: pool.filter { minOf(it.width, it.height) <= targetShort }.maxByOrNull { it.width.toLong() * it.height }
-        ?: pool.minByOrNull { it.width.toLong() * it.height }
-}
+fun chooseStreamSize(sizes: List<Size>, aspect: Float, targetShort: Int): Size? =
+    pickStreamSize(sizes, { it.width }, { it.height }, aspect, targetShort)
 
 /** 拍照尺寸：4:3、不超过约 1300 万像素、长边不超过 4096（GPU 纹理和内存都吃得消）。 */
-fun chooseJpegSize(sizes: List<Size>): Size? {
+fun chooseJpegSize(sizes: List<Size>): Size? = pickJpegSize(sizes, { it.width }, { it.height })
+
+// 下面两个泛型版本不依赖 android.util.Size，方便在 JVM 单测里直接测
+internal fun <T> pickStreamSize(sizes: List<T>, w: (T) -> Int, h: (T) -> Int, aspect: Float, targetShort: Int): T? {
+    val matching = sizes.filter { abs(w(it).toFloat() / h(it) - aspect) < 0.02f }
+    val pool = matching.ifEmpty { sizes }
+    fun short(s: T) = minOf(w(s), h(s))
+    fun area(s: T) = w(s).toLong() * h(s)
+    return pool.firstOrNull { short(it) == targetShort }
+        ?: pool.filter { short(it) <= targetShort }.maxByOrNull(::area)
+        ?: pool.minByOrNull(::area)
+}
+
+internal fun <T> pickJpegSize(sizes: List<T>, w: (T) -> Int, h: (T) -> Int): T? {
+    fun area(s: T) = w(s).toLong() * h(s)
     val fit = sizes.filter {
-        abs(it.width.toFloat() / it.height - 4f / 3f) < 0.02f &&
-            it.width.toLong() * it.height <= 13_000_000L && maxOf(it.width, it.height) <= 4096
+        abs(w(it).toFloat() / h(it) - 4f / 3f) < 0.02f && area(it) <= 13_000_000L && maxOf(w(it), h(it)) <= 4096
     }
-    return fit.maxByOrNull { it.width.toLong() * it.height } ?: sizes.minByOrNull { abs(it.width * it.height - 12_000_000) }
+    return fit.maxByOrNull(::area) ?: sizes.minByOrNull { abs(area(it) - 12_000_000L) }
 }
 
 /** 变焦预设：在支持范围内挑几个常用倍率，显示成等效焦距。 */
-fun zoomPresets(range: Range<Float>): List<Float> {
-    val candidates = listOf(range.lower, 1f, 2f, 3f, 5f)
-    return candidates.filter { it >= range.lower - 1e-3f && it <= range.upper + 1e-3f }
+fun zoomPresets(lower: Float, upper: Float): List<Float> {
+    val candidates = listOf(lower, 1f, 2f, 3f, 5f)
+    return candidates.filter { it >= lower - 1e-3f && it <= upper + 1e-3f }
         .map { (it * 10).roundToInt() / 10f }
         .distinct()
         .sorted()
