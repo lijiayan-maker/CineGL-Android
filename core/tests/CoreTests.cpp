@@ -380,11 +380,12 @@ TEST(waveformAndThumbnailPlans) {
     CHECK(atlas.w == 480 && atlas.h == 480);
 }
 
+const char* const kProgramShaders[] = {"quad.vert", "input_oes.frag", "input_2d.frag", "glow_prefilter.frag",
+                                       "kawase_down.frag", "kawase_up.frag", "film.frag", "present.frag",
+                                       "blit.frag", "waveform.vert", "waveform.frag"};
+
 TEST(embeddedShadersResolveIncludes) {
-    const char* names[] = {"quad.vert", "input_oes.frag", "input_2d.frag", "glow_prefilter.frag",
-                           "kawase_down.frag", "kawase_up.frag", "film.frag", "present.frag",
-                           "blit.frag", "waveform.vert", "waveform.frag"};
-    for (const char* name : names) {
+    for (const char* name : kProgramShaders) {
         const std::string src = shaders::load(name);
         CHECK(!src.empty());
         CHECK(src.rfind("#version 300 es", 0) == 0);   // 第一行必须是 #version
@@ -393,7 +394,23 @@ TEST(embeddedShadersResolveIncludes) {
     CHECK(shaders::load("film.frag").find("cineLogEncode") != std::string::npos);
 }
 
-int main() {
+/** 把展开 #include 后的 shader 写到目录里，给 scripts/validate_shaders.sh 用 glslc 离线编译。 */
+int dumpShaders(const std::string& dir) {
+    for (const char* name : kProgramShaders) {
+        std::FILE* f = std::fopen((dir + "/" + name).c_str(), "w");
+        if (!f) {
+            std::printf("cannot write %s/%s\n", dir.c_str(), name);
+            return 1;
+        }
+        const std::string src = shaders::load(name);
+        std::fwrite(src.data(), 1, src.size(), f);
+        std::fclose(f);
+    }
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    if (argc == 3 && std::string(argv[1]) == "--dump-shaders") return dumpShaders(argv[2]);
     for (const TestCase& t : registry()) {
         const int before = gFailures;
         t.body();
