@@ -9,6 +9,7 @@ plugins {
 android {
     namespace = "com.mycro.cinegl"
     compileSdk = 36
+    ndkVersion = "27.1.12297006"
 
     defaultConfig {
         applicationId = "com.mycro.cinegl"
@@ -16,6 +17,17 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        ndk {
+            // 学习项目只编 arm64：真机和 Apple Silicon 上的模拟器都是它，编译快一倍
+            abiFilters += listOf("arm64-v8a")
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     buildTypes {
