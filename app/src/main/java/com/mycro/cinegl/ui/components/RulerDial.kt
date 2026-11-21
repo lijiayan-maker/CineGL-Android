@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -51,9 +54,13 @@ fun RulerDial(
     val spacingPx = with(density) { 9.dp.toPx() }
     val current by rememberUpdatedState(value)
     val measurer = rememberTextMeasurer()
+    // 拖动量在这里累积，不能每次都从调用方传回来的 value 重算：曝光补偿这类参数会被取整到整格，
+    // 一次拖动事件只有几个像素、不到半格，取整后又回到原值，慢慢拖就永远拖不动
+    var dragValue by remember { mutableFloatStateOf(value) }
     val dragState = rememberDraggableState { delta ->
         if (!enabled || step <= 0f) return@rememberDraggableState
-        onValueChange((current - delta / spacingPx * step).coerceIn(range.start, range.endInclusive))
+        dragValue = (dragValue - delta / spacingPx * step).coerceIn(range.start, range.endInclusive)
+        onValueChange(dragValue)
     }
     val accent = if (enabled) CineColors.Accent else CineColors.TextSecondary
 
@@ -68,7 +75,7 @@ fun RulerDial(
             Modifier
                 .fillMaxWidth()
                 .height(44.dp)
-                .draggable(dragState, Orientation.Horizontal, enabled = enabled),
+                .draggable(dragState, Orientation.Horizontal, enabled = enabled, onDragStarted = { dragValue = current }),
         ) {
             Canvas(Modifier.fillMaxWidth().height(44.dp)) {
                 if (step <= 0f) return@Canvas
