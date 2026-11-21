@@ -47,12 +47,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.booleanResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.mycro.cinegl.R
 import com.mycro.cinegl.render.FrameFit
 import com.mycro.cinegl.ui.components.InfoChip
 import com.mycro.cinegl.ui.components.ZoomPills
@@ -166,11 +169,16 @@ fun PreviewArea(state: CameraUiState, vm: CameraViewModel, modifier: Modifier = 
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (state.logOn) {
-                InfoChip("LOG", CineColors.Accent)
-                InfoChip(if (state.burnIn) "LUT 烧录" else "LUT 仅监看", if (state.burnIn) CineColors.Record else CineColors.TextSecondary, outlined = true)
+                InfoChip(stringResource(R.string.chip_log), CineColors.Accent)
+                InfoChip(
+                    stringResource(if (state.burnIn) R.string.chip_burn_in else R.string.chip_monitor_only),
+                    if (state.burnIn) CineColors.Record else CineColors.TextSecondary,
+                    outlined = true,
+                )
             }
-            if (state.showSignal && state.logOn) InfoChip("Log 原片", Color.White)
-            state.currentLook?.let { InfoChip(it.name, Color.White) }
+            if (state.showSignal && state.logOn) InfoChip(stringResource(R.string.chip_signal), Color.White)
+            val zh = booleanResource(R.bool.zh_hans)
+            state.currentLook?.let { InfoChip(it.title(zh), Color.White) }
         }
 
         // 录制计时

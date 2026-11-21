@@ -109,7 +109,8 @@ class RenderEngine {
         egl = core
         pbuffer = core.createPbufferSurface(1, 1).also { core.makeCurrent(it) }
         engine = CineCore.engineCreate()
-        check(CineCore.engineInit(engine)) { "C++ 引擎初始化失败，看 logcat 里 CineGL 的报错" }
+        // 只会出现在崩溃日志里，给开发者看，所以用英文（和其他日志一致）
+        check(CineCore.engineInit(engine)) { "C++ engine init failed, see the CineGL errors in logcat" }
 
         // 外部纹理：相机通过 SurfaceTexture 往里送帧，纹理目标必须是 GL_TEXTURE_EXTERNAL_OES
         val tex = IntArray(1)

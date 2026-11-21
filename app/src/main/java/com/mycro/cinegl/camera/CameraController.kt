@@ -24,6 +24,7 @@ import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.view.Surface
+import com.mycro.cinegl.R
 import com.mycro.cinegl.core.CineCore
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.Executor
@@ -35,7 +36,7 @@ import kotlin.math.pow
  * Camera2 封装：开相机、建会话、按 [CameraControls] 组装请求、拍照。
  * 所有 Camera2 回调都在自己的 HandlerThread 上；对外的 suspend 方法可以在任意协程里调。
  */
-class CameraController(context: Context) {
+class CameraController(private val context: Context) {
 
     data class SessionConfig(
         val previewSurface: Surface,
@@ -114,16 +115,16 @@ class CameraController(context: Context) {
             override fun onDisconnected(camera: CameraDevice) {
                 camera.close()
                 if (device == camera) device = null
-                if (cont.isActive) cont.resumeWithException(IllegalStateException("相机被其他应用占用"))
+                if (cont.isActive) cont.resumeWithException(IllegalStateException(context.getString(R.string.error_camera_in_use)))
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
                 camera.close()
                 if (device == camera) device = null
                 if (cont.isActive) {
-                    cont.resumeWithException(IllegalStateException("打开相机失败（错误码 $error）"))
+                    cont.resumeWithException(IllegalStateException(context.getString(R.string.error_camera_open_code, error)))
                 } else {
-                    onError?.invoke("相机出错（错误码 $error）")
+                    onError?.invoke(context.getString(R.string.error_camera_code, error))
                 }
             }
         })
@@ -133,7 +134,7 @@ class CameraController(context: Context) {
         handler.post {
             val d = device
             if (d == null) {
-                cont.resumeWithException(IllegalStateException("相机未打开"))
+                cont.resumeWithException(IllegalStateException(context.getString(R.string.error_camera_not_open)))
                 return@post
             }
             jpegReader?.close()
@@ -155,7 +156,7 @@ class CameraController(context: Context) {
                 }
 
                 override fun onConfigureFailed(s: CameraCaptureSession) {
-                    cont.resumeWithException(IllegalStateException("相机会话配置失败"))
+                    cont.resumeWithException(IllegalStateException(context.getString(R.string.error_session_config)))
                 }
             }
             d.createCaptureSession(SessionConfiguration(SessionConfiguration.SESSION_REGULAR, outputs, executor, callback))
@@ -207,7 +208,7 @@ class CameraController(context: Context) {
             val reader = jpegReader
             val cfg = config
             if (d == null || s == null || reader == null || cfg == null) {
-                cont.resumeWithException(IllegalStateException("当前模式不能拍照"))
+                cont.resumeWithException(IllegalStateException(context.getString(R.string.error_photo_mode)))
                 return@post
             }
             var jpeg: ByteArray? = null
@@ -253,7 +254,9 @@ class CameraController(context: Context) {
                     request: CaptureRequest,
                     failure: android.hardware.camera2.CaptureFailure,
                 ) {
-                    if (cont.isActive) cont.resumeWithException(IllegalStateException("拍照失败（${failure.reason}）"))
+                    if (cont.isActive) {
+                        cont.resumeWithException(IllegalStateException(context.getString(R.string.error_capture_code, failure.reason)))
+                    }
                 }
             }, handler)
         }

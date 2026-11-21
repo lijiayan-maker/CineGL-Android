@@ -58,7 +58,53 @@ class OutputPlan(raw: IntArray) {
     val orientationHint = raw[3]
 }
 
-data class LookInfo(val index: Int, val id: String, val name: String, val nameEn: String, val isCube: Boolean)
+/**
+ * 影调信息。name 是中文名（导入的 LUT 为文件名），nameEn 是英文名（导入的 LUT 为 .cube 里的 TITLE，可能为空）。
+ * 界面语言跟随系统：简体中文用中文名，其他语言一律用英文名。
+ */
+data class LookInfo(val index: Int, val id: String, val name: String, val nameEn: String, val isCube: Boolean) {
+    /** 卡片大字、角标、面板标题用的名字。导入的 LUT 两种语言都用文件名（那是用户自己起的名字）。 */
+    fun title(zh: Boolean): String = if (isCube || zh) name else nameEn
+
+    /** 卡片小字：中文界面配英文名；导入的 LUT 配 TITLE，没有 TITLE 返回 null（界面显示「导入的 LUT」）；英文界面的内置影调不配小字。 */
+    fun subtitle(zh: Boolean): String? = when {
+        isCube -> nameEn.ifEmpty { null }
+        zh -> nameEn
+        else -> null
+    }
+
+    /** 缩略图出来之前影调按钮里的字：中文取前两个字，英文取前两个单词的首字母。 */
+    fun badge(zh: Boolean): String {
+        val t = title(zh)
+        if (zh) return t.take(2)
+        val initials = t.split(' ', '-', '_')
+            .filter { it.firstOrNull()?.isLetterOrDigit() == true }
+            .take(2)
+            .joinToString("") { it.first().uppercase() }
+        return initials.ifEmpty { t.take(2) }
+    }
+}
+
+/** .cube 解析失败的原因，code 与 C++ cinegl::CubeError 一致（文案在界面层按系统语言生成）。 */
+enum class CubeError(val code: Int) {
+    UNKNOWN(-1),
+    SIZE_OUT_OF_RANGE(1),
+    UNSUPPORTED_1D(2),
+    BAD_DOMAIN(3),
+    BAD_DATA(4),
+    DATA_BEFORE_SIZE(5),
+    COUNT_MISMATCH(6),
+    DOMAIN_ORDER(7),
+    MISSING_SIZE(8),
+    ;
+
+    companion object {
+        fun of(code: Int) = entries.firstOrNull { it.code == code } ?: UNKNOWN
+    }
+}
+
+/** 上一次 .cube 解析失败的详情：line 为出错行号，count / expected 为实际与应有的数据行数。 */
+data class CubeFailure(val error: CubeError, val line: Int, val count: Int, val expected: Int)
 
 /**
  * C++ 渲染核心的 JNI 入口。
@@ -81,14 +127,17 @@ object CineCore {
     fun frameGeometry(bufferW: Int, bufferH: Int, sensorOrientation: Int, aspect: Int) =
         FrameGeometry(computeFrame(bufferW, bufferH, sensorOrientation, aspect))
 
+    fun lastCubeFailure(): CubeFailure = lastCubeError().let { CubeFailure(CubeError.of(it[0]), it[1], it[2], it[3]) }
+
     // ---- 影调库 ----
     external fun lookCount(): Int
     external fun lookInfo(index: Int): Array<String>?
     external fun bakeLook(index: Int, encoding: Int, size: Int): FloatArray?
     external fun bakeNeutral(encoding: Int, size: Int): FloatArray
-    /** 解析 .cube 并注册成影调，返回索引；失败返回 -1，原因见 [lastError]。 */
+    /** 解析 .cube 并注册成影调，返回索引；失败返回 -1，原因见 [lastCubeFailure]。 */
     external fun registerCubeLook(id: String, name: String, text: String): Int
-    external fun lastError(): String
+    /** [错误码, 行号, 实际行数, 应有行数]，用 [lastCubeFailure] 取更方便。 */
+    external fun lastCubeError(): IntArray
 
     // ---- 几何 / 色彩工具 ----
     external fun computeFrame(bufferW: Int, bufferH: Int, sensorOrientation: Int, aspect: Int): FloatArray

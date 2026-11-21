@@ -206,9 +206,10 @@ TEST(silverLookIsMonochrome) {
 // ------------------------------------------------------------------ .cube
 
 TEST(cubeParseAndSample) {
-    std::string err;
+    CubeParseError err;
     auto cube = parseCube(identityCube(5), &err);
     CHECK(cube != nullptr);
+    CHECK(err.code == CubeError::None);
     if (!cube) return;
     CHECK(cube->size == 5);
     CHECK(cube->title == "identity");
@@ -218,22 +219,48 @@ TEST(cubeParseAndSample) {
     CHECK_NEAR(s.b, 0.91, 1e-5);
 }
 
+TEST(cubeLookWithoutTitleLeavesEnglishNameEmpty) {
+    std::string text = identityCube(2);
+    text = text.substr(text.find('\n') + 1);   // 去掉 TITLE 行
+    CubeParseError err;
+    auto cube = parseCube(text, &err);
+    CHECK(cube != nullptr);
+    const int index = LookLibrary::instance().addCube("test_untitled", "untitled", cube);
+    Look look;
+    CHECK(LookLibrary::instance().get(index, &look));
+    CHECK(look.nameEn.empty());   // 由界面按系统语言显示「导入的 LUT / Imported LUT」
+}
+
+// 失败时给出错误码和定位数字（界面按系统语言把它们拼成文案）
 TEST(cubeRejectsBadInput) {
-    std::string err;
+    CubeParseError err;
     CHECK(parseCube("LUT_1D_SIZE 16\n", &err) == nullptr);
-    CHECK(!err.empty());
+    CHECK(err.code == CubeError::Unsupported1D);
+    CHECK(parseCube("LUT_3D_SIZE 300\n", &err) == nullptr);
+    CHECK(err.code == CubeError::SizeOutOfRange);
     CHECK(parseCube("LUT_3D_SIZE 2\n0 0 0\n1 1 1\n", &err) == nullptr);   // 数量不够
-    CHECK(parseCube("0 0 0\n", &err) == nullptr);                          // 没有尺寸
+    CHECK(err.code == CubeError::CountMismatch && err.count == 2 && err.expected == 8);
+    CHECK(parseCube("0 0 0\n", &err) == nullptr);                          // 数据在尺寸之前
+    CHECK(err.code == CubeError::DataBeforeSize && err.line == 1);
+    CHECK(parseCube("TITLE \"x\"\n# 只有注释\n", &err) == nullptr);           // 整个文件没有尺寸
+    CHECK(err.code == CubeError::MissingSize);
     CHECK(parseCube("LUT_3D_SIZE 2\n0 0 zero\n", &err) == nullptr);
+    CHECK(err.code == CubeError::BadData && err.line == 2);
+    CHECK(err.describe() == "line 2: expected 3 numbers");
+    CHECK(parseCube("DOMAIN_MIN 0 0\nLUT_3D_SIZE 2\n", &err) == nullptr);
+    CHECK(err.code == CubeError::BadDomain && err.line == 1);
+    CHECK(parseCube("DOMAIN_MIN 1 1 1\nDOMAIN_MAX 0 0 0\n" + identityCube(2), &err) == nullptr);
+    CHECK(err.code == CubeError::DomainOrder);
 }
 
 TEST(cubeLookBakeOrderAndLogInput) {
-    std::string err;
+    CubeParseError err;
     auto cube = parseCube(identityCube(3), &err);
     const int index = LookLibrary::instance().addCube("test_identity", "测试", cube);
     Look look;
     CHECK(LookLibrary::instance().get(index, &look));
     CHECK(look.isCube);
+    CHECK(look.nameEn == "identity");   // 英文名取 .cube 里的 TITLE
     // 709 信号 + 单位 .cube = 单位 LUT，顺带验证内存顺序（R 最快）
     const int n = 5;
     const std::vector<float> data = lut::bake(look, Encoding::Rec709, n);

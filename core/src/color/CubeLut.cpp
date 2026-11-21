@@ -26,11 +26,28 @@ bool parseFloats(const std::string& s, float* out, int n) {
     return true;
 }
 
-void setError(std::string* error, const std::string& msg) {
-    if (error) *error = msg;
+void setError(CubeParseError* error, CubeError code, int line = 0, int count = 0, int expected = 0) {
+    if (error) *error = CubeParseError{code, line, count, expected};
 }
 
 }  // namespace
+
+std::string CubeParseError::describe() const {
+    const std::string at = "line " + std::to_string(line) + ": ";
+    switch (code) {
+        case CubeError::None: return "ok";
+        case CubeError::SizeOutOfRange: return "LUT_3D_SIZE out of range (2..256)";
+        case CubeError::Unsupported1D: return "1D LUTs are not supported";
+        case CubeError::BadDomain: return at + "DOMAIN needs 3 numbers";
+        case CubeError::BadData: return at + "expected 3 numbers";
+        case CubeError::DataBeforeSize: return at + "data before LUT_3D_SIZE";
+        case CubeError::CountMismatch:
+            return "found " + std::to_string(count) + " data lines, LUT_3D_SIZE needs " + std::to_string(expected);
+        case CubeError::DomainOrder: return "DOMAIN_MAX must be greater than DOMAIN_MIN";
+        case CubeError::MissingSize: return "LUT_3D_SIZE is missing";
+    }
+    return "unknown error";
+}
 
 Vec3 CubeLut::sample(const Vec3& in) const {
     const Vec3 range = domainMax - domainMin;
@@ -51,7 +68,7 @@ Vec3 CubeLut::sample(const Vec3& in) const {
     return mix(mix(c00, c10, tg), mix(c01, c11, tg), tb);
 }
 
-std::shared_ptr<CubeLut> parseCube(const std::string& text, std::string* error) {
+std::shared_ptr<CubeLut> parseCube(const std::string& text, CubeParseError* error) {
     auto lut = std::make_shared<CubeLut>();
     std::istringstream stream(text);
     std::string raw;
@@ -73,17 +90,17 @@ std::shared_ptr<CubeLut> parseCube(const std::string& text, std::string* error) 
             } else if (key == "LUT_3D_SIZE") {
                 lut->size = std::atoi(rest.c_str());
                 if (lut->size < 2 || lut->size > 256) {
-                    setError(error, "LUT_3D_SIZE 超出范围（2..256）");
+                    setError(error, CubeError::SizeOutOfRange, lineNo);
                     return nullptr;
                 }
                 lut->data.reserve(static_cast<size_t>(lut->size) * lut->size * lut->size);
             } else if (key == "LUT_1D_SIZE") {
-                setError(error, "暂不支持 1D LUT");
+                setError(error, CubeError::Unsupported1D, lineNo);
                 return nullptr;
             } else if (key == "DOMAIN_MIN" || key == "DOMAIN_MAX") {
                 float v[3];
                 if (!parseFloats(rest, v, 3)) {
-                    setError(error, "第 " + std::to_string(lineNo) + " 行 DOMAIN 格式错误");
+                    setError(error, CubeError::BadDomain, lineNo);
                     return nullptr;
                 }
                 (key == "DOMAIN_MIN" ? lut->domainMin : lut->domainMax) = Vec3(v[0], v[1], v[2]);
@@ -94,25 +111,28 @@ std::shared_ptr<CubeLut> parseCube(const std::string& text, std::string* error) 
 
         float v[3];
         if (!parseFloats(line, v, 3)) {
-            setError(error, "第 " + std::to_string(lineNo) + " 行无法解析为 3 个数字");
+            setError(error, CubeError::BadData, lineNo);
             return nullptr;
         }
         if (lut->size == 0) {
-            setError(error, "数据出现在 LUT_3D_SIZE 之前");
+            setError(error, CubeError::DataBeforeSize, lineNo);
             return nullptr;
         }
         lut->data.emplace_back(v[0], v[1], v[2]);
     }
 
+    if (lut->size == 0) {
+        setError(error, CubeError::MissingSize);
+        return nullptr;
+    }
     const size_t expected = static_cast<size_t>(lut->size) * lut->size * lut->size;
-    if (lut->size == 0 || lut->data.size() != expected) {
-        setError(error, "数据行数 " + std::to_string(lut->data.size()) + " 与 LUT_3D_SIZE 不符（应为 " +
-                            std::to_string(expected) + "）");
+    if (lut->data.size() != expected) {
+        setError(error, CubeError::CountMismatch, 0, static_cast<int>(lut->data.size()), static_cast<int>(expected));
         return nullptr;
     }
     const Vec3 range = lut->domainMax - lut->domainMin;
     if (range.r <= 0.f || range.g <= 0.f || range.b <= 0.f) {
-        setError(error, "DOMAIN_MAX 必须大于 DOMAIN_MIN");
+        setError(error, CubeError::DomainOrder);
         return nullptr;
     }
     return lut;

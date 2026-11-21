@@ -42,9 +42,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mycro.cinegl.R
 import com.mycro.cinegl.record.AudioCapture
 import com.mycro.cinegl.ui.theme.CineColors
 import kotlin.math.roundToInt
@@ -55,7 +58,7 @@ private val noRipple = MutableInteractionSource()
 fun <T> TextTabs(
     items: List<T>,
     selected: T,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     enabled: Boolean,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
@@ -185,7 +188,7 @@ fun ResetToolButton(enabled: Boolean, onClick: () -> Unit, modifier: Modifier = 
             Icon(CineIcons.Reset, null, tint = tint, modifier = Modifier.size(20.dp))
         }
         Text(
-            "重置",
+            stringResource(R.string.reset),
             color = if (enabled) CineColors.TextSecondary else tint,
             fontSize = 10.sp,
             modifier = Modifier.padding(top = 2.dp),
@@ -233,9 +236,9 @@ fun ShutterButton(video: Boolean, recording: Boolean, busy: Boolean, onClick: ()
     }
 }
 
-/** 影调按钮：彩色渐变圈 + 当前影调的实时缩略图。 */
+/** 影调按钮：彩色渐变圈 + 当前影调的实时缩略图；缩略图出来之前显示 badge（中文两个字 / 英文首字母）。 */
 @Composable
-fun LookButton(thumb: ImageBitmap?, name: String, onClick: () -> Unit) {
+fun LookButton(thumb: ImageBitmap?, badge: String, onClick: () -> Unit) {
     val ring = remember {
         Brush.sweepGradient(listOf(Color(0xFFFF8A3D), Color(0xFFFFD166), Color(0xFF06D6A0), Color(0xFF118AB2), Color(0xFFB5179E), Color(0xFFFF8A3D)))
     }
@@ -252,7 +255,7 @@ fun LookButton(thumb: ImageBitmap?, name: String, onClick: () -> Unit) {
         if (thumb != null) {
             Image(thumb, null, contentScale = ContentScale.Crop, modifier = Modifier.size(46.dp))
         } else {
-            Text(name.take(2), color = CineColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(badge, color = CineColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
         }
     }
 }
@@ -333,7 +336,7 @@ fun SectionTitle(text: String) {
 fun <T> Segmented(
     items: List<T>,
     selected: T,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
     isEnabled: (T) -> Boolean = { true },
 ) {
@@ -398,7 +401,13 @@ fun SettingSwitch(title: String, subtitle: String? = null, checked: Boolean, ena
 @Composable
 fun LabeledSlider(label: String, value: Float, onChange: (Float) -> Unit) {
     Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = CineColors.TextPrimary, fontSize = 13.sp, modifier = Modifier.width(64.dp))
+        Text(
+            label,
+            color = CineColors.TextPrimary,
+            fontSize = 13.sp,
+            maxLines = 1,
+            modifier = Modifier.width(dimensionResource(R.dimen.slider_label_width)),
+        )
         Slider(
             value = value,
             onValueChange = onChange,

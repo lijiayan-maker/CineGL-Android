@@ -171,7 +171,8 @@ int LookLibrary::addCube(const std::string& id, const std::string& name, std::sh
     Look look;
     look.id = id;
     look.name = name;
-    look.nameEn = cube && !cube->title.empty() ? cube->title : "Imported LUT";
+    // 英文名用 .cube 里的 TITLE；没有就留空，由界面按系统语言显示「导入的 LUT」
+    look.nameEn = cube ? cube->title : std::string();
     look.isCube = true;
     look.cube = std::move(cube);
     for (size_t i = 0; i < looks_.size(); ++i) {

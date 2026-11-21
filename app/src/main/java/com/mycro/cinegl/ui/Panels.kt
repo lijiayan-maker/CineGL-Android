@@ -31,9 +31,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.booleanResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mycro.cinegl.R
 import com.mycro.cinegl.core.LookInfo
 import com.mycro.cinegl.ui.components.CineIcons
 import com.mycro.cinegl.ui.components.InfoChip
@@ -83,9 +88,10 @@ fun LookPanel(
     onImport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val zh = booleanResource(R.bool.zh_hans)
     PanelScaffold(
-        "影调",
-        state.currentLook?.name,
+        stringResource(R.string.looks),
+        state.currentLook?.title(zh),
         vm::closePanels,
         modifier,
         action = { ResetAction(enabled = state.effects != Effects(), onClick = vm::resetEffects) },
@@ -95,7 +101,7 @@ fun LookPanel(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(state.looks, key = { it.id }) { look ->
-                LookCard(look, state.lookThumbs[look.index], look.index == state.lookIndex) { vm.selectLook(look.index) }
+                LookCard(look, zh, state.lookThumbs[look.index], look.index == state.lookIndex) { vm.selectLook(look.index) }
             }
             item(key = "import") { ImportCard(onImport) }
         }
@@ -106,14 +112,14 @@ fun LookPanel(
                 .verticalScroll(rememberScrollState()),
         ) {
             val fx = state.effects
-            LabeledSlider("影调强度", fx.lookStrength) { v -> vm.setEffects { it.copy(lookStrength = v) } }
+            LabeledSlider(stringResource(R.string.fx_look_strength), fx.lookStrength) { v -> vm.setEffects { it.copy(lookStrength = v) } }
             HorizontalDivider(Modifier.padding(vertical = 4.dp), color = Color.White.copy(alpha = 0.08f))
-            LabeledSlider("光晕", fx.halation) { v -> vm.setEffects { it.copy(halation = v) } }
-            LabeledSlider("柔光", fx.mist) { v -> vm.setEffects { it.copy(mist = v) } }
-            LabeledSlider("颗粒", fx.grain) { v -> vm.setEffects { it.copy(grain = v) } }
-            LabeledSlider("颗粒大小", fx.grainSize) { v -> vm.setEffects { it.copy(grainSize = v) } }
-            LabeledSlider("暗角", fx.vignette) { v -> vm.setEffects { it.copy(vignette = v) } }
-            LabeledSlider("色散", fx.aberration) { v -> vm.setEffects { it.copy(aberration = v) } }
+            LabeledSlider(stringResource(R.string.fx_halation), fx.halation) { v -> vm.setEffects { it.copy(halation = v) } }
+            LabeledSlider(stringResource(R.string.fx_mist), fx.mist) { v -> vm.setEffects { it.copy(mist = v) } }
+            LabeledSlider(stringResource(R.string.fx_grain), fx.grain) { v -> vm.setEffects { it.copy(grain = v) } }
+            LabeledSlider(stringResource(R.string.fx_grain_size), fx.grainSize) { v -> vm.setEffects { it.copy(grainSize = v) } }
+            LabeledSlider(stringResource(R.string.fx_vignette), fx.vignette) { v -> vm.setEffects { it.copy(vignette = v) } }
+            LabeledSlider(stringResource(R.string.fx_aberration), fx.aberration) { v -> vm.setEffects { it.copy(aberration = v) } }
         }
     }
 }
@@ -131,12 +137,13 @@ private fun ResetAction(enabled: Boolean, onClick: () -> Unit) {
     ) {
         Icon(CineIcons.Reset, null, tint = color, modifier = Modifier.size(16.dp))
         Spacer(Modifier.width(4.dp))
-        Text("重置", color = color, fontSize = 13.sp)
+        Text(stringResource(R.string.reset), color = color, fontSize = 13.sp)
     }
 }
 
+/** 中文界面：大字中文名 + 小字英文名；英文界面：只显示英文名（较长，字号小一档、最多两行）。 */
 @Composable
-private fun LookCard(look: LookInfo, thumb: ImageBitmap?, selected: Boolean, onClick: () -> Unit) {
+private fun LookCard(look: LookInfo, zh: Boolean, thumb: ImageBitmap?, selected: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Box(
         Modifier
@@ -156,8 +163,20 @@ private fun LookCard(look: LookInfo, thumb: ImageBitmap?, selected: Boolean, onC
                 .background(Brush.verticalGradient(0.4f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))),
         )
         Column(Modifier.align(Alignment.BottomStart).padding(8.dp)) {
-            Text(look.name, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(look.nameEn, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp, maxLines = 1)
+            val oneLine = zh || look.isCube
+            Text(
+                look.title(zh),
+                color = Color.White,
+                fontSize = if (oneLine) 17.sp else 14.sp,
+                lineHeight = if (oneLine) TextUnit.Unspecified else 16.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = if (oneLine) 1 else 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val subtitle = look.subtitle(zh) ?: if (look.isCube) stringResource(R.string.look_imported) else null
+            if (subtitle != null) {
+                Text(subtitle, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp, maxLines = 1)
+            }
         }
         if (look.isCube) {
             Box(Modifier.align(Alignment.TopEnd).padding(6.dp)) { InfoChip("LUT", Color.White) }
@@ -178,60 +197,76 @@ private fun ImportCard(onClick: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(CineIcons.Plus, null, tint = CineColors.TextPrimary, modifier = Modifier.size(26.dp))
-        Text("导入 .cube", color = CineColors.TextSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+        Text(stringResource(R.string.import_cube), color = CineColors.TextSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
     }
 }
 
 /** 设置面板：画幅、分辨率、帧率、Log、辅助功能。 */
 @Composable
 fun SettingsPanel(state: CameraUiState, vm: CameraViewModel, modifier: Modifier = Modifier) {
-    PanelScaffold("设置", null, vm::closePanels, modifier) {
+    PanelScaffold(stringResource(R.string.settings), null, vm::closePanels, modifier) {
         Column(
             Modifier
                 .height(420.dp)
                 .verticalScroll(rememberScrollState()),
         ) {
-            SectionTitle("画幅")
-            Segmented(Aspect.entries, state.aspect, { it.label }, vm::setAspect)
+            SectionTitle(stringResource(R.string.settings_aspect))
+            Segmented(Aspect.entries, state.aspect, { stringResource(it.label) }, vm::setAspect)
             if (state.mode == CaptureMode.VIDEO) {
-                SectionTitle("分辨率 / 帧率")
+                SectionTitle(stringResource(R.string.settings_resolution_fps))
                 Segmented(Resolution.entries, state.resolution, { it.label }, vm::setResolution, { it == Resolution.FHD || state.uhdAvailable })
                 Spacer(Modifier.height(8.dp))
                 Segmented(state.availableFps, state.fps, { "$it fps" }, vm::setFps)
             }
 
-            SectionTitle("Log")
-            Segmented(LogMode.entries, state.logMode, { it.label }, vm::setLogMode, { it != LogMode.ISP || state.ispLogAvailable })
+            SectionTitle(stringResource(R.string.settings_log))
+            Segmented(LogMode.entries, state.logMode, { stringResource(it.label) }, vm::setLogMode, { it != LogMode.ISP || state.ispLogAvailable })
             Text(
-                when (state.logMode) {
-                    LogMode.OFF -> "相机直出的 Rec.709 画面直接进影调。"
-                    LogMode.GPU -> "在 GPU 里把画面转成 CineLog 灰片：工作流和真 Log 一样，但宽容度不会凭空变大。"
-                    LogMode.ISP -> "让相机 ISP 直接用 CineLog 曲线出片（TONEMAP_CURVE），高光层次比直出更多。"
-                },
+                stringResource(
+                    when (state.logMode) {
+                        LogMode.OFF -> R.string.log_off_desc
+                        LogMode.GPU -> R.string.log_gpu_desc
+                        LogMode.ISP -> R.string.log_isp_desc
+                    },
+                ),
                 color = CineColors.TextSecondary,
                 fontSize = 11.sp,
                 modifier = Modifier.padding(top = 6.dp),
             )
             SettingSwitch(
-                "LUT 烧录",
-                "关闭后录的是 Log 原片，屏幕上仍然套着影调监看",
+                stringResource(R.string.burn_in),
+                stringResource(R.string.burn_in_desc),
                 state.burnIn,
                 enabled = state.logOn,
                 onChange = vm::setBurnIn,
             )
-            SettingSwitch("显示 Log 原片", "屏幕上看灰片（不影响录制）", state.showSignal, enabled = state.logOn, onChange = vm::setShowSignal)
+            SettingSwitch(
+                stringResource(R.string.show_signal),
+                stringResource(R.string.show_signal_desc),
+                state.showSignal,
+                enabled = state.logOn,
+                onChange = vm::setShowSignal,
+            )
 
-            SectionTitle("辅助")
-            SettingSwitch("网格", checked = state.assist.grid) { v -> vm.setAssist { it.copy(grid = v) } }
-            SettingSwitch("水平仪", checked = state.assist.level) { v -> vm.setAssist { it.copy(level = v) } }
-            SettingSwitch("斑马纹", "标出过曝区域", state.assist.zebra) { v -> vm.setAssist { it.copy(zebra = v) } }
-            SettingSwitch("峰值对焦", "合焦的边缘标红", state.assist.peaking) { v -> vm.setAssist { it.copy(peaking = v) } }
-            SettingSwitch("波形图", "亮度分布示波器", state.assist.waveform) { v -> vm.setAssist { it.copy(waveform = v) } }
+            SectionTitle(stringResource(R.string.settings_assist))
+            SettingSwitch(stringResource(R.string.assist_grid), checked = state.assist.grid) { v -> vm.setAssist { it.copy(grid = v) } }
+            SettingSwitch(stringResource(R.string.assist_level), checked = state.assist.level) { v -> vm.setAssist { it.copy(level = v) } }
+            SettingSwitch(stringResource(R.string.assist_zebra), stringResource(R.string.assist_zebra_desc), state.assist.zebra) { v ->
+                vm.setAssist { it.copy(zebra = v) }
+            }
+            SettingSwitch(stringResource(R.string.assist_peaking), stringResource(R.string.assist_peaking_desc), state.assist.peaking) { v ->
+                vm.setAssist { it.copy(peaking = v) }
+            }
+            SettingSwitch(stringResource(R.string.assist_waveform), stringResource(R.string.assist_waveform_desc), state.assist.waveform) { v ->
+                vm.setAssist { it.copy(waveform = v) }
+            }
             if (state.caps?.previewStabilization == true) {
-                SettingSwitch("防抖", checked = state.controls.stabilization) { v -> vm.updateControls { it.copy(stabilization = v) } }
+                SettingSwitch(stringResource(R.string.stabilization), checked = state.controls.stabilization) { v ->
+                    vm.updateControls { it.copy(stabilization = v) }
+                }
             }
             Text(
-                "CineGL · OpenGL ES 3.0 渲染学习项目",
+                stringResource(R.string.settings_footer),
                 color = CineColors.TextSecondary.copy(alpha = 0.6f),
                 fontSize = 11.sp,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp).width(400.dp),

@@ -1,27 +1,37 @@
 package com.mycro.cinegl.ui
 
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.ImageBitmap
+import com.mycro.cinegl.R
 import com.mycro.cinegl.camera.CameraCaps
 import com.mycro.cinegl.camera.CameraControls
 import com.mycro.cinegl.camera.Readout
 import com.mycro.cinegl.core.LookInfo
 
-enum class CaptureMode(val label: String) { PHOTO("照片"), VIDEO("视频") }
+// 界面文案都放在字符串资源里：系统为简体中文时显示中文，其他语言一律显示英文
+
+enum class CaptureMode(@StringRes val label: Int) { PHOTO(R.string.mode_photo), VIDEO(R.string.mode_video) }
 
 /** code 和 C++ 的 cinegl::AspectRatio 一致。 */
-enum class Aspect(val code: Int, val label: String) {
-    R16x9(0, "16:9"),
-    R4x3(1, "4:3 全开"),
-    R1x1(2, "1:1"),
-    R239(3, "2.39:1"),
+enum class Aspect(val code: Int, @StringRes val label: Int) {
+    R16x9(0, R.string.aspect_16x9),
+    R4x3(1, R.string.aspect_4x3),
+    R1x1(2, R.string.aspect_1x1),
+    R239(3, R.string.aspect_239),
 }
 
 enum class Resolution(val label: String, val shortSide: Int) { FHD("1080p", 1080), UHD("4K", 2160) }
 
-enum class LogMode(val label: String) { OFF("关"), GPU("GPU 模拟"), ISP("ISP 曲线") }
+enum class LogMode(@StringRes val label: Int) { OFF(R.string.log_off), GPU(R.string.log_gpu), ISP(R.string.log_isp) }
 
-enum class Tool(val label: String) { FOCUS("对焦"), WB("白平衡"), ISO("ISO"), SHUTTER("快门"), EV("曝光补偿") }
+enum class Tool(@StringRes val label: Int) {
+    FOCUS(R.string.tool_focus),
+    WB(R.string.tool_wb),
+    ISO(R.string.tool_iso),
+    SHUTTER(R.string.tool_shutter),
+    EV(R.string.tool_ev),
+}
 
 enum class Panel { LOOKS, SETTINGS }
 

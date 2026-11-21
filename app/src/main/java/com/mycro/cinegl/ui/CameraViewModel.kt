@@ -8,9 +8,11 @@ import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.util.Size
 import android.view.Surface
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.mycro.cinegl.R
 import com.mycro.cinegl.camera.CameraController
 import com.mycro.cinegl.camera.CameraControls
 import com.mycro.cinegl.camera.Metering
@@ -19,6 +21,8 @@ import com.mycro.cinegl.camera.chooseStreamSize
 import com.mycro.cinegl.camera.snapOrientation
 import com.mycro.cinegl.camera.zoomPresets
 import com.mycro.cinegl.core.CineCore
+import com.mycro.cinegl.core.CubeError
+import com.mycro.cinegl.core.CubeFailure
 import com.mycro.cinegl.core.Encoding
 import com.mycro.cinegl.core.FrameGeometry
 import com.mycro.cinegl.core.OutputPlan
@@ -123,13 +127,13 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                 audio.stop()
                 val id = (if (s.front) frontId else backId) ?: backId ?: frontId
                 if (id == null) {
-                    toast("没有找到可用的相机")
+                    toast(R.string.error_no_camera)
                     return@withLock
                 }
                 val caps = try {
                     camera.open(id)
                 } catch (e: Exception) {
-                    toast(e.message ?: "打开相机失败")
+                    toast(e.message ?: str(R.string.error_camera_open))
                     cameraRunning = false
                     return@withLock
                 }
@@ -141,7 +145,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                 val targetShort = if (video && s.resolution == Resolution.UHD && uhd) 2160 else 1080
                 val size = chooseStreamSize(caps.previewSizes, streamAspect, targetShort)
                 if (size == null) {
-                    toast("相机没有可用的预览尺寸")
+                    toast(R.string.error_no_preview_size)
                     return@withLock
                 }
                 val fps = if (caps.supportsFps(s.fps)) s.fps else 30
@@ -156,7 +160,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                         CameraController.SessionConfig(surface, size, if (video) null else chooseJpegSize(caps.jpegSizes), fps, video),
                     )
                 } catch (e: Exception) {
-                    toast(e.message ?: "相机会话失败")
+                    toast(e.message ?: str(R.string.error_session))
                     return@withLock
                 }
                 if (video && s.micPermission) audio.start(caps.timestampRealtime)
@@ -265,7 +269,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
     /** 影调面板的「重置」：影调强度和胶片效果恢复默认，选中的影调不变。 */
     fun resetEffects() {
         setEffects { Effects() }
-        toast("影调强度与效果已恢复默认")
+        toast(R.string.toast_effects_reset)
     }
 
     fun importCube(uri: Uri) {
@@ -276,12 +280,12 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                     val name = ctx.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
                         ?.use { c -> if (c.moveToFirst()) c.getString(0) else null } ?: "imported.cube"
                     val text = ctx.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-                        ?: error("读不到文件")
+                        ?: error("cannot read $uri")
                     name to text
                 }.getOrNull()
             }
             if (imported == null) {
-                toast("读取 LUT 失败")
+                toast(R.string.toast_lut_read_failed)
                 return@launch
             }
             val (fileName, text) = imported
@@ -290,7 +294,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                 CineCore.registerCubeLook("cube:$safeName", fileName.substringBeforeLast('.'), text)
             }
             if (index < 0) {
-                toast("导入失败：${CineCore.lastError()}")
+                toast(R.string.toast_lut_import_failed, cubeFailureText(CineCore.lastCubeFailure()))
                 return@launch
             }
             // 拷一份到私有目录，下次启动自动加载
@@ -298,8 +302,21 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
             refreshLooks()
             render.bakeLook(index)
             selectLook(index)
-            toast("已导入 ${fileName.substringBeforeLast('.')}")
+            toast(R.string.toast_lut_imported, fileName.substringBeforeLast('.'))
         }
+    }
+
+    /** C++ 只给错误码和数字，这里按系统语言拼成文案。 */
+    private fun cubeFailureText(f: CubeFailure): String = when (f.error) {
+        CubeError.SIZE_OUT_OF_RANGE -> str(R.string.cube_error_size_range)
+        CubeError.UNSUPPORTED_1D -> str(R.string.cube_error_1d)
+        CubeError.BAD_DOMAIN -> str(R.string.cube_error_domain, f.line)
+        CubeError.BAD_DATA -> str(R.string.cube_error_data, f.line)
+        CubeError.DATA_BEFORE_SIZE -> str(R.string.cube_error_data_before_size, f.line)
+        CubeError.COUNT_MISMATCH -> str(R.string.cube_error_count, f.count, f.expected)
+        CubeError.DOMAIN_ORDER -> str(R.string.cube_error_domain_order)
+        CubeError.MISSING_SIZE -> str(R.string.cube_error_missing_size)
+        CubeError.UNKNOWN -> str(R.string.cube_error_unknown)
     }
 
     private suspend fun loadImportedLuts() {
@@ -369,7 +386,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
         updateControls { it.resetToAuto() }
         camera.resetFocus()
         _state.update { it.copy(focusPoint = null) }
-        toast("参数已恢复自动")
+        toast(R.string.toast_controls_reset)
     }
 
     fun tapToFocus(frameX: Float, frameY: Float) {
@@ -400,8 +417,8 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
             try {
                 val still = camera.capture()
                 val s = _state.value
-                val caps = s.caps ?: error("相机未就绪")
-                val bitmap = withContext(Dispatchers.Default) { decodeJpeg(still.jpeg, 4096) } ?: error("照片解码失败")
+                val caps = s.caps ?: error(str(R.string.error_camera_not_ready))
+                val bitmap = withContext(Dispatchers.Default) { decodeJpeg(still.jpeg, 4096) } ?: error(str(R.string.error_photo_decode))
                 val request = RenderEngine.StillRequest(
                     bitmap = bitmap,
                     sensorOrientation = caps.sensorOrientation,
@@ -413,16 +430,16 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                 )
                 val processed = suspendCancellableCoroutine { cont -> render.processStill(request) { cont.resume(it) } }
                 bitmap.recycle()
-                if (processed == null) error("GPU 处理失败")
+                if (processed == null) error(str(R.string.error_gpu))
                 val ctx = getApplication<Application>()
                 val uri = withContext(Dispatchers.IO) {
                     MediaSaver.savePhoto(ctx, processed, MediaSaver.PhotoMeta(still.iso, still.exposureNs, still.focalLength, still.aperture))
-                } ?: error("保存失败")
+                } ?: error(str(R.string.error_save))
                 val thumb = withContext(Dispatchers.Default) { thumbnailOf(processed) }
                 processed.recycle()
                 _state.update { it.copy(lastUri = uri, lastIsVideo = false, lastThumb = thumb.asImageBitmap()) }
             } catch (e: Exception) {
-                toast(e.message ?: "拍照失败")
+                toast(e.message ?: str(R.string.error_photo))
             } finally {
                 _state.update { it.copy(busy = false) }
             }
@@ -445,7 +462,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                 ),
             )
         } catch (e: Exception) {
-            toast("无法开始录像：${e.message}")
+            toast(R.string.error_record_start, e.message.orEmpty())
             return
         }
         rec.start()
@@ -477,7 +494,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
                         lastThumb = thumb ?: it.lastThumb,
                     )
                 }
-                if (uri == null) toast("录像保存失败")
+                if (uri == null) toast(R.string.error_record_save)
             }
         }
     }
@@ -521,6 +538,11 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
     }
 
     fun toast(message: String) = _state.update { it.copy(message = message, messageId = it.messageId + 1) }
+
+    fun toast(@StringRes id: Int, vararg args: Any) = toast(str(id, *args))
+
+    /** 按当前系统语言取文案（Application 的资源会跟着系统语言切换更新）。 */
+    private fun str(@StringRes id: Int, vararg args: Any): String = getApplication<Application>().getString(id, *args)
 
     private fun decodeJpeg(bytes: ByteArray, maxSide: Int): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

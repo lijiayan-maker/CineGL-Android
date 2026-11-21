@@ -45,7 +45,7 @@ fun RulerDial(
     step: Float,
     majorEvery: Int,
     enabled: Boolean,
-    label: (Float) -> String,
+    label: @Composable (Float) -> String,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     tickLabel: ((Float) -> String)? = null,

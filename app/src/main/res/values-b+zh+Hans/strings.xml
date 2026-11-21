@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 简体中文（zh-Hans：中国大陆、新加坡等）。繁体中文和其他语言走 values/ 里的英文。 -->
+<resources>
+    <!-- 拍摄模式 -->
+    <string name="mode_photo">照片</string>
+    <string name="mode_video">视频</string>
+
+    <!-- 工具栏 -->
+    <string name="tool_focus">对焦</string>
+    <string name="tool_wb">白平衡</string>
+    <string name="tool_shutter">快门</string>
+    <string name="tool_ev">曝光补偿</string>
+    <string name="reset">重置</string>
+
+    <!-- 刻度盘 -->
+    <string name="dial_shutter">快门 %1$s</string>
+    <string name="dial_ev">曝光补偿 %1$s EV</string>
+    <string name="dial_focus">对焦 %1$s</string>
+    <string name="dial_focus_unsupported">此镜头不支持手动对焦</string>
+    <string name="dial_kelvin">色温 %1$dK</string>
+    <string name="dial_tint">色调</string>
+
+    <!-- 影调面板 -->
+    <string name="looks">影调</string>
+    <string name="look_imported">导入的 LUT</string>
+    <string name="import_cube">导入 .cube</string>
+    <string name="fx_look_strength">影调强度</string>
+    <string name="fx_halation">光晕</string>
+    <string name="fx_mist">柔光</string>
+    <string name="fx_grain">颗粒</string>
+    <string name="fx_grain_size">颗粒大小</string>
+    <string name="fx_vignette">暗角</string>
+    <string name="fx_aberration">色散</string>
+
+    <!-- 设置面板 -->
+    <string name="settings">设置</string>
+    <string name="settings_aspect">画幅</string>
+    <string name="settings_resolution_fps">分辨率 / 帧率</string>
+    <string name="log_off">关</string>
+    <string name="log_gpu">GPU 模拟</string>
+    <string name="log_isp">ISP 曲线</string>
+    <string name="log_off_desc">相机直出的 Rec.709 画面直接进影调。</string>
+    <string name="log_gpu_desc">在 GPU 里把画面转成 CineLog 灰片：工作流和真 Log 一样，但宽容度不会凭空变大。</string>
+    <string name="log_isp_desc">让相机 ISP 直接用 CineLog 曲线出片（TONEMAP_CURVE），高光层次比直出更多。</string>
+    <string name="burn_in">LUT 烧录</string>
+    <string name="burn_in_desc">关闭后录的是 Log 原片，屏幕上仍然套着影调监看</string>
+    <string name="show_signal">显示 Log 原片</string>
+    <string name="show_signal_desc">屏幕上看灰片（不影响录制）</string>
+    <string name="settings_assist">辅助</string>
+    <string name="assist_grid">网格</string>
+    <string name="assist_level">水平仪</string>
+    <string name="assist_zebra">斑马纹</string>
+    <string name="assist_zebra_desc">标出过曝区域</string>
+    <string name="assist_peaking">峰值对焦</string>
+    <string name="assist_peaking_desc">合焦的边缘标红</string>
+    <string name="assist_waveform">波形图</string>
+    <string name="assist_waveform_desc">亮度分布示波器</string>
+    <string name="stabilization">防抖</string>
+    <string name="settings_footer">CineGL · OpenGL ES 3.0 渲染学习项目</string>
+
+    <!-- 画幅 -->
+    <string name="aspect_4x3">4:3 全开</string>
+
+    <!-- 预览角标 -->
+    <string name="chip_burn_in">LUT 烧录</string>
+    <string name="chip_monitor_only">LUT 仅监看</string>
+    <string name="chip_signal">Log 原片</string>
+
+    <!-- 权限 / 相册 -->
+    <string name="permission_camera">需要相机权限才能取景</string>
+    <string name="permission_grant">授权</string>
+    <string name="no_viewer_app">没有可以打开它的应用</string>
+
+    <!-- 提示 -->
+    <string name="toast_controls_reset">参数已恢复自动</string>
+    <string name="toast_effects_reset">影调强度与效果已恢复默认</string>
+    <string name="toast_lut_read_failed">读取 LUT 失败</string>
+    <string name="toast_lut_import_failed">导入失败：%1$s</string>
+    <string name="toast_lut_imported">已导入 %1$s</string>
+    <string name="error_no_camera">没有找到可用的相机</string>
+    <string name="error_camera_open">打开相机失败</string>
+    <string name="error_no_preview_size">相机没有可用的预览尺寸</string>
+    <string name="error_session">相机会话失败</string>
+    <string name="error_camera_not_ready">相机未就绪</string>
+    <string name="error_photo_decode">照片解码失败</string>
+    <string name="error_gpu">GPU 处理失败</string>
+    <string name="error_save">保存失败</string>
+    <string name="error_photo">拍照失败</string>
+    <string name="error_record_start">无法开始录像：%1$s</string>
+    <string name="error_record_save">录像保存失败</string>
+
+    <!-- 相机 / 录像底层报错 -->
+    <string name="error_camera_in_use">相机被其他应用占用</string>
+    <string name="error_camera_open_code">打开相机失败（错误码 %1$d）</string>
+    <string name="error_camera_code">相机出错（错误码 %1$d）</string>
+    <string name="error_camera_not_open">相机未打开</string>
+    <string name="error_session_config">相机会话配置失败</string>
+    <string name="error_photo_mode">当前模式不能拍照</string>
+    <string name="error_capture_code">拍照失败（%1$d）</string>
+    <string name="error_video_file">无法在相册里创建视频文件</string>
+
+    <!-- .cube 解析失败 -->
+    <string name="cube_error_size_range">LUT_3D_SIZE 超出范围（2..256）</string>
+    <string name="cube_error_1d">暂不支持 1D LUT</string>
+    <string name="cube_error_domain">第 %1$d 行 DOMAIN 格式错误</string>
+    <string name="cube_error_data">第 %1$d 行无法解析为 3 个数字</string>
+    <string name="cube_error_data_before_size">第 %1$d 行：数据出现在 LUT_3D_SIZE 之前</string>
+    <string name="cube_error_count">数据行数 %1$d 与 LUT_3D_SIZE 不符（应为 %2$d）</string>
+    <string name="cube_error_domain_order">DOMAIN_MAX 必须大于 DOMAIN_MIN</string>
+    <string name="cube_error_missing_size">缺少 LUT_3D_SIZE</string>
+    <string name="cube_error_unknown">无法识别的 .cube 文件</string>
+</resources>

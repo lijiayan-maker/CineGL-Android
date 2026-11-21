@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 影调面板滑杆左侧名称的宽度：英文名（Look strength、Aberration）比中文长 -->
+    <dimen name="slider_label_width">96dp</dimen>
+</resources>

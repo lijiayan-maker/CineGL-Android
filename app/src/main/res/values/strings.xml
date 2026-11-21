@@ -1,4 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  默认语言是英文：系统语言不是简体中文（包括繁体中文）时都用这里的文案。
+  简体中文在 values-b+zh+Hans/strings.xml，新增文案两边都要加（单测会检查两边的键是否一致）。
+-->
 <resources>
-    <string name="app_name">CineGL</string>
+    <string name="app_name" translatable="false">CineGL</string>
+
+    <!-- 拍摄模式 -->
+    <string name="mode_photo">Photo</string>
+    <string name="mode_video">Video</string>
+
+    <!-- 工具栏 -->
+    <string name="tool_focus">Focus</string>
+    <string name="tool_wb">WB</string>
+    <string name="tool_iso" translatable="false">ISO</string>
+    <string name="tool_shutter">Shutter</string>
+    <string name="tool_ev">Exposure</string>
+    <string name="reset">Reset</string>
+
+    <!-- 刻度盘 -->
+    <string name="dial_shutter">Shutter %1$s</string>
+    <string name="dial_ev">Exposure %1$s EV</string>
+    <string name="dial_focus">Focus %1$s</string>
+    <string name="dial_focus_unsupported">Manual focus not supported</string>
+    <string name="dial_kelvin">Color temp %1$dK</string>
+    <string name="dial_tint">Tint</string>
+
+    <!-- 影调面板 -->
+    <string name="looks">Looks</string>
+    <string name="look_imported">Imported LUT</string>
+    <string name="import_cube">Import .cube</string>
+    <string name="fx_look_strength">Look strength</string>
+    <string name="fx_halation">Halation</string>
+    <string name="fx_mist">Diffusion</string>
+    <string name="fx_grain">Grain</string>
+    <string name="fx_grain_size">Grain size</string>
+    <string name="fx_vignette">Vignette</string>
+    <string name="fx_aberration">Aberration</string>
+
+    <!-- 设置面板 -->
+    <string name="settings">Settings</string>
+    <string name="settings_aspect">Aspect ratio</string>
+    <string name="settings_resolution_fps">Resolution / Frame rate</string>
+    <string name="settings_log" translatable="false">Log</string>
+    <string name="log_off">Off</string>
+    <string name="log_gpu">GPU emulation</string>
+    <string name="log_isp">ISP curve</string>
+    <string name="log_off_desc">The camera\'s Rec.709 image goes straight into the look.</string>
+    <string name="log_gpu_desc">Converts the image to a flat CineLog signal on the GPU. Same workflow as real log, but no extra dynamic range.</string>
+    <string name="log_isp_desc">The camera ISP outputs CineLog directly (TONEMAP_CURVE), keeping more highlight detail than the standard image.</string>
+    <string name="burn_in">Burn in LUT</string>
+    <string name="burn_in_desc">When off, files keep the clean log signal; the screen still shows the look</string>
+    <string name="show_signal">Show log signal</string>
+    <string name="show_signal_desc">View the flat log image on screen (recording unaffected)</string>
+    <string name="settings_assist">Monitoring</string>
+    <string name="assist_grid">Grid</string>
+    <string name="assist_level">Level</string>
+    <string name="assist_zebra">Zebra</string>
+    <string name="assist_zebra_desc">Mark overexposed areas</string>
+    <string name="assist_peaking">Focus peaking</string>
+    <string name="assist_peaking_desc">Outline in-focus edges in red</string>
+    <string name="assist_waveform">Waveform</string>
+    <string name="assist_waveform_desc">Luma waveform scope</string>
+    <string name="stabilization">Stabilization</string>
+    <string name="settings_footer">CineGL · An OpenGL ES 3.0 rendering study project</string>
+
+    <!-- 画幅 -->
+    <string name="aspect_16x9" translatable="false">16:9</string>
+    <string name="aspect_4x3">4:3 Full</string>
+    <string name="aspect_1x1" translatable="false">1:1</string>
+    <string name="aspect_239" translatable="false">2.39:1</string>
+
+    <!-- 预览角标 -->
+    <string name="chip_log" translatable="false">LOG</string>
+    <string name="chip_burn_in">LUT burned in</string>
+    <string name="chip_monitor_only">LUT monitor only</string>
+    <string name="chip_signal">Log view</string>
+
+    <!-- 权限 / 相册 -->
+    <string name="permission_camera">Camera permission is needed to shoot</string>
+    <string name="permission_grant">Allow</string>
+    <string name="no_viewer_app">No app can open this file</string>
+
+    <!-- 提示 -->
+    <string name="toast_controls_reset">Manual controls back to auto</string>
+    <string name="toast_effects_reset">Look strength and effects reset</string>
+    <string name="toast_lut_read_failed">Couldn\'t read the LUT file</string>
+    <string name="toast_lut_import_failed">Import failed: %1$s</string>
+    <string name="toast_lut_imported">Imported %1$s</string>
+    <string name="error_no_camera">No camera available</string>
+    <string name="error_camera_open">Couldn\'t open the camera</string>
+    <string name="error_no_preview_size">The camera has no usable preview size</string>
+    <string name="error_session">Camera session failed</string>
+    <string name="error_camera_not_ready">Camera not ready</string>
+    <string name="error_photo_decode">Couldn\'t decode the photo</string>
+    <string name="error_gpu">GPU processing failed</string>
+    <string name="error_save">Couldn\'t save</string>
+    <string name="error_photo">Couldn\'t take the photo</string>
+    <string name="error_record_start">Couldn\'t start recording: %1$s</string>
+    <string name="error_record_save">Couldn\'t save the video</string>
+
+    <!-- 相机 / 录像底层报错 -->
+    <string name="error_camera_in_use">The camera is in use by another app</string>
+    <string name="error_camera_open_code">Couldn\'t open the camera (error %1$d)</string>
+    <string name="error_camera_code">Camera error (code %1$d)</string>
+    <string name="error_camera_not_open">The camera is not open</string>
+    <string name="error_session_config">Couldn\'t configure the camera session</string>
+    <string name="error_photo_mode">Can\'t take photos in this mode</string>
+    <string name="error_capture_code">Capture failed (%1$d)</string>
+    <string name="error_video_file">Couldn\'t create the video file in the gallery</string>
+
+    <!-- .cube 解析失败（错误码见 C++ cinegl::CubeError） -->
+    <string name="cube_error_size_range">LUT_3D_SIZE must be between 2 and 256</string>
+    <string name="cube_error_1d">1D LUTs aren\'t supported</string>
+    <string name="cube_error_domain">Line %1$d: DOMAIN needs 3 numbers</string>
+    <string name="cube_error_data">Line %1$d: expected 3 numbers</string>
+    <string name="cube_error_data_before_size">Line %1$d: data appears before LUT_3D_SIZE</string>
+    <string name="cube_error_count">Found %1$d data lines, LUT_3D_SIZE needs %2$d</string>
+    <string name="cube_error_domain_order">DOMAIN_MAX must be greater than DOMAIN_MIN</string>
+    <string name="cube_error_missing_size">LUT_3D_SIZE is missing</string>
+    <string name="cube_error_unknown">Unrecognized .cube file</string>
 </resources>

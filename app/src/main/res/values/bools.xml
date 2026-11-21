@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 界面是否为简体中文：决定影调显示中文名还是英文名（C++ 核心同时提供两种名字） -->
+    <bool name="zh_hans">false</bool>
+</resources>

@@ -1,5 +1,6 @@
 // JNI 桥：Kotlin 的 com.mycro.cinegl.core.CineCore ↔ C++ core。
 // 这里只做类型转换，不放任何业务逻辑——逻辑都在 core 里（能在电脑上单测）。
+#include <android/log.h>
 #include <jni.h>
 
 #include <cmath>
@@ -21,11 +22,11 @@ using namespace cinegl;
 namespace {
 
 std::mutex gErrorMutex;
-std::string gLastError;
+CubeParseError gLastCubeError;
 
-void setLastError(const std::string& e) {
+void setLastCubeError(const CubeParseError& e) {
     std::lock_guard<std::mutex> lock(gErrorMutex);
-    gLastError = e;
+    gLastCubeError = e;
 }
 
 std::string toString(JNIEnv* env, jstring s) {
@@ -109,18 +110,24 @@ JNI_FN(jfloatArray, bakeNeutral)(JNIEnv* env, jobject, jint encoding, jint size)
 }
 
 JNI_FN(jint, registerCubeLook)(JNIEnv* env, jobject, jstring id, jstring name, jstring text) {
-    std::string error;
+    CubeParseError error;
     auto cube = parseCube(toString(env, text), &error);
     if (!cube) {
-        setLastError(error);
+        __android_log_print(ANDROID_LOG_WARN, "CineGL", "cube rejected: %s", error.describe().c_str());
+        setLastCubeError(error);
         return -1;
     }
     return LookLibrary::instance().addCube(toString(env, id), toString(env, name), cube);
 }
 
-JNI_FN(jstring, lastError)(JNIEnv* env, jobject) {
+/** [错误码, 行号, 实际行数, 应有行数]，文案由 Kotlin 按系统语言生成。 */
+JNI_FN(jintArray, lastCubeError)(JNIEnv* env, jobject) {
     std::lock_guard<std::mutex> lock(gErrorMutex);
-    return env->NewStringUTF(gLastError.c_str());
+    const jint out[] = {static_cast<jint>(gLastCubeError.code), gLastCubeError.line, gLastCubeError.count,
+                        gLastCubeError.expected};
+    jintArray arr = env->NewIntArray(4);
+    env->SetIntArrayRegion(arr, 0, 4, out);
+    return arr;
 }
 
 // ================================================================ 几何 / 色彩工具（纯 CPU）

@@ -41,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.booleanResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +50,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mycro.cinegl.R
 import com.mycro.cinegl.camera.formatEv
 import com.mycro.cinegl.camera.formatFocus
 import com.mycro.cinegl.camera.formatShutter
@@ -127,7 +130,7 @@ fun CameraScreen(vm: CameraViewModel = viewModel()) {
                 try {
                     context.startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
-                    vm.toast("没有可以打开它的应用")
+                    vm.toast(R.string.no_viewer_app)
                 }
             }
         }
@@ -165,7 +168,7 @@ private fun TopBar(state: CameraUiState, vm: CameraViewModel) {
         TextTabs(
             items = CaptureMode.entries,
             selected = state.mode,
-            label = { it.label },
+            label = { stringResource(it.label) },
             enabled = !state.recording,
             onSelect = vm::setMode,
             modifier = Modifier.align(Alignment.Center),
@@ -205,8 +208,8 @@ private fun ToolRow(state: CameraUiState, vm: CameraViewModel) {
                     Tool.EV -> CineIcons.Exposure
                     Tool.ISO -> null
                 },
-                iconText = if (tool == Tool.ISO) "ISO" else null,
-                label = tool.label,
+                iconText = if (tool == Tool.ISO) stringResource(R.string.tool_iso) else null,
+                label = stringResource(tool.label),
                 value = value,
                 selected = state.activeTool == tool,
                 manual = manual,
@@ -254,7 +257,7 @@ private fun DialArea(state: CameraUiState, vm: CameraViewModel) {
                         RulerDial(
                             value = log2(ns / 1e9f).coerceIn(lo, hi), range = lo..hi, step = 1f / 3f, majorEvery = 3,
                             enabled = caps.manualSensor,
-                            label = { "快门 ${formatShutter((2f.pow(it) * 1e9f).toLong())}" },
+                            label = { stringResource(R.string.dial_shutter, formatShutter((2f.pow(it) * 1e9f).toLong())) },
                             tickLabel = { formatShutter((2f.pow(it) * 1e9f).toLong()) },
                             onValueChange = { v -> vm.updateControls { it.copy(shutterAuto = false, exposureNs = (2f.pow(v) * 1e9f).roundToLong()) } },
                             modifier = Modifier.weight(1f),
@@ -268,7 +271,7 @@ private fun DialArea(state: CameraUiState, vm: CameraViewModel) {
                         RulerDial(
                             value = c.evIndex * step, range = (caps.evRange.lower * step)..(caps.evRange.upper * step),
                             step = step, majorEvery = (1f / step).roundToInt().coerceAtLeast(1), enabled = enabled,
-                            label = { "曝光补偿 ${formatEv(it)} EV" }, tickLabel = { formatEv(it) },
+                            label = { stringResource(R.string.dial_ev, formatEv(it)) }, tickLabel = { formatEv(it) },
                             onValueChange = { v -> vm.updateControls { it.copy(evIndex = (v / step).roundToInt()) } },
                             modifier = Modifier.weight(1f),
                         )
@@ -281,7 +284,10 @@ private fun DialArea(state: CameraUiState, vm: CameraViewModel) {
                         RulerDial(
                             value = d.coerceIn(0f, maxD), range = 0f..maxD, step = maxD / 40f, majorEvery = 10,
                             enabled = caps.manualFocus,
-                            label = { if (caps.manualFocus) "对焦 ${formatFocus(it)}" else "此镜头不支持手动对焦" },
+                            label = {
+                                if (caps.manualFocus) stringResource(R.string.dial_focus, formatFocus(it))
+                                else stringResource(R.string.dial_focus_unsupported)
+                            },
                             tickLabel = ::formatFocus,
                             onValueChange = { v -> vm.updateControls { it.copy(focusAuto = false, focusDiopters = v) } },
                             modifier = Modifier.weight(1f),
@@ -292,7 +298,8 @@ private fun DialArea(state: CameraUiState, vm: CameraViewModel) {
                         Spacer(Modifier.width(12.dp))
                         RulerDial(
                             value = c.kelvin, range = 2000f..10000f, step = 100f, majorEvery = 10, enabled = true,
-                            label = { "色温 ${it.roundToInt()}K" }, tickLabel = { "${(it / 1000).roundToInt()}k" },
+                            label = { stringResource(R.string.dial_kelvin, it.roundToInt()) },
+                            tickLabel = { "${(it / 1000).roundToInt()}k" },
                             onValueChange = { v -> vm.updateControls { it.copy(wbAuto = false, kelvin = v) } },
                             modifier = Modifier.weight(1f),
                         )
@@ -301,7 +308,7 @@ private fun DialArea(state: CameraUiState, vm: CameraViewModel) {
             }
             if (tool == Tool.WB) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("色调", color = CineColors.TextSecondary, fontSize = 12.sp, modifier = Modifier.width(52.dp))
+                    Text(stringResource(R.string.dial_tint), color = CineColors.TextSecondary, fontSize = 12.sp, modifier = Modifier.width(52.dp))
                     Slider(
                         value = c.tint * 10f,
                         onValueChange = { v -> vm.updateControls { it.copy(wbAuto = false, tint = v / 10f) } },
@@ -330,7 +337,10 @@ private fun BottomBar(state: CameraUiState, vm: CameraViewModel, onOpenLast: () 
         GalleryButton(state.lastThumb, onOpenLast)
         ShutterButton(video = state.mode == CaptureMode.VIDEO, recording = state.recording, busy = state.busy, onClick = vm::onShutter)
         val look = state.currentLook
-        LookButton(look?.let { state.lookThumbs[it.index] }, look?.name ?: "影调") { vm.togglePanel(Panel.LOOKS) }
+        val zh = booleanResource(R.bool.zh_hans)
+        LookButton(look?.let { state.lookThumbs[it.index] }, look?.badge(zh) ?: stringResource(R.string.looks)) {
+            vm.togglePanel(Panel.LOOKS)
+        }
     }
 }
 
@@ -341,9 +351,9 @@ private fun PermissionHint(onRequest: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("需要相机权限才能取景", color = CineColors.TextPrimary, fontSize = 15.sp)
+        Text(stringResource(R.string.permission_camera), color = CineColors.TextPrimary, fontSize = 15.sp)
         Text(
-            "授权",
+            stringResource(R.string.permission_grant),
             color = CineColors.Accent,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,

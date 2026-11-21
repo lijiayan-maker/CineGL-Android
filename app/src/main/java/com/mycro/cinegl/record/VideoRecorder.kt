@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import android.view.Surface
+import com.mycro.cinegl.R
 import com.mycro.cinegl.media.MediaSaver
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -62,7 +63,7 @@ class VideoRecorder(private val context: Context) {
     @Throws(IOException::class)
     fun prepare(spec: Spec): Surface {
         this.spec = spec
-        val out = MediaSaver.createVideo(context) ?: throw IOException("无法在相册里创建视频文件")
+        val out = MediaSaver.createVideo(context) ?: throw IOException(context.getString(R.string.error_video_file))
         output = out
         muxer = MediaMuxer(out.fd.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4).apply {
             setOrientationHint(spec.orientationHint)
