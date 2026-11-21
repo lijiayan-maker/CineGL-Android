@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图标：一圈光圈叶片 + 中间一道暖色光晕，108dp 画布，安全区在中间 66dp -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 外圈 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F2F2F2"
+        android:strokeWidth="3"
+        android:pathData="M54,27 A27,27 0 1,1 53.99,27 Z" />
+    <!-- 光圈叶片（六边形开口） -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F2F2F2"
+        android:strokeWidth="2.4"
+        android:strokeLineJoin="round"
+        android:pathData="M54,38 L67.86,46 L67.86,62 L54,70 L40.14,62 L40.14,46 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F2F2F2"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M54,38 L60,28 M67.86,46 L79,42 M67.86,62 L75,72 M54,70 L48,80 M40.14,62 L29,66 M40.14,46 L33,36" />
+    <!-- 中心光晕 -->
+    <path
+        android:fillColor="#FF7A3D"
+        android:pathData="M54,47 A7,7 0 1,1 53.99,47 Z" />
+</vector>
