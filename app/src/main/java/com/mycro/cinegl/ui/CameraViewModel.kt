@@ -104,8 +104,9 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
     fun onSurfaceCreated(surface: Surface) = render.attachScreen(surface)
     fun onSurfaceChanged(width: Int, height: Int) = render.resizeScreen(width, height)
     fun onSurfaceDestroyed() = render.detachScreen()
-    fun setCornerRadius(px: Float) {
-        render.cornerRadiusPx = px
+    fun setOverlayMetrics(cornerRadiusPx: Float, topInsetPx: Float) {
+        render.cornerRadiusPx = cornerRadiusPx
+        render.overlayTopInsetPx = topInsetPx
     }
 
     private fun maybeStartCamera() {
@@ -181,7 +182,6 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
     }
 
     override fun onThumbnails(thumbnails: Map<Int, Bitmap>) {
-        if (_state.value.panel != Panel.LOOKS) return
         _state.update { s -> s.copy(lookThumbs = s.lookThumbs + thumbnails.mapValues { it.value.asImageBitmap() }) }
     }
 

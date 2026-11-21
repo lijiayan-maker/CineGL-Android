@@ -373,6 +373,9 @@ TEST(waveformAndThumbnailPlans) {
     CHECK(s.w == 192 && s.h == 256);
     const auto r = plan::waveformRect(1000.f, 1800.f);
     CHECK(r[2] > r[0] && r[3] > r[1] && r[2] <= 1.f && r[3] <= 1.f);
+    const auto inset = plan::waveformRect(1000.f, 1800.f, 120.f);   // 给角标留 120px
+    CHECK_NEAR(r[3] - inset[3], 120.0 / 1800.0, 1e-6);
+    CHECK_NEAR(inset[3] - inset[1], r[3] - r[1], 1e-6);
     const plan::Size atlas = plan::thumbnailAtlasSize(11, 120, 160, 4);
     CHECK(atlas.w == 480 && atlas.h == 480);
 }

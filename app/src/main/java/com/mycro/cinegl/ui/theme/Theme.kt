@@ -1,9 +1,12 @@
 package com.mycro.cinegl.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 
 object CineColors {
     val Background = Color(0xFF000000)
@@ -19,9 +22,25 @@ object CineColors {
     val MeterRed = Color(0xFFF87171)
 }
 
+/**
+ * Material3 默认的 bodyLarge 带 24sp 行高：给 Text 只设 fontSize = 8.sp 时行高仍是 24sp，
+ * 小字会被撑得很高（电平表、工具栏都中招）。这里把行高改成「跟随字体」。
+ */
+private val CineTypography = Typography().let { t ->
+    t.copy(
+        bodyLarge = t.bodyLarge.copy(lineHeight = TextUnit.Unspecified, letterSpacing = 0.sp),
+        bodyMedium = t.bodyMedium.copy(lineHeight = TextUnit.Unspecified, letterSpacing = 0.sp),
+        bodySmall = t.bodySmall.copy(lineHeight = TextUnit.Unspecified, letterSpacing = 0.sp),
+        labelLarge = t.labelLarge.copy(lineHeight = TextUnit.Unspecified),
+        labelMedium = t.labelMedium.copy(lineHeight = TextUnit.Unspecified),
+        labelSmall = t.labelSmall.copy(lineHeight = TextUnit.Unspecified),
+    )
+}
+
 @Composable
 fun CineTheme(content: @Composable () -> Unit) {
     MaterialTheme(
+        typography = CineTypography,
         colorScheme = darkColorScheme(
             primary = CineColors.Accent,
             onPrimary = Color.Black,

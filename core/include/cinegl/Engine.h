@@ -47,6 +47,7 @@ struct PresentParams {
     int viewHeight = 0;
     RectF frameRect;            // 画面在 surface 里的位置（左上原点，像素）
     float cornerRadius = 0.f;   // 圆角半径（像素）
+    float overlayTopInset = 0.f;   // 画面顶部留给 UI 角标的高度（像素），波形图放在它下面
 };
 
 enum class Plane { Signal = 0, Graded = 1 };

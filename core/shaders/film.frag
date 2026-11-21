@@ -6,16 +6,16 @@ precision highp sampler3D;
 
 in highp vec2 vUv;
 uniform highp sampler2D uInput;        // 工作信号
-uniform highp sampler2D uHalation;     // 光晕模糊结果（线性）
-uniform highp sampler2D uMist;         // 柔光模糊结果（线性）
+uniform highp sampler2D uHalationTex;  // 光晕模糊结果（线性）
+uniform highp sampler2D uMistTex;      // 柔光模糊结果（线性）
 uniform highp sampler3D uNeutralLut;   // 中性渲染 LUT
 uniform highp sampler3D uLookLut;      // 影调 LUT
 uniform float uNeutralLutSize;
 uniform float uLookLutSize;
 uniform float uLookStrength;           // 影调强度 0..1
 uniform int uWorkingEncoding;
-uniform float uHalation;               // 0..1
-uniform float uMist;                   // 0..1
+uniform float uHalationAmount;         // 光晕强度 0..1
+uniform float uMistAmount;             // 柔光强度 0..1
 uniform float uGrain;                  // 0..1
 uniform float uGrainSize;              // 颗粒尺寸（像素）
 uniform vec2 uFrameSize;               // 画面尺寸（像素）
@@ -58,19 +58,19 @@ float valueNoise(vec2 p, uint seed) {
 void main() {
     vec3 sig = texture(uInput, vUv).rgb;
 
-    if (uHalation > 0.0 || uMist > 0.0) {
+    if (uHalationAmount > 0.0 || uMistAmount > 0.0) {
         // 光是「加」出来的，所以先解码到线性空间再叠加
         vec3 lin = decodeSignal(sig, uWorkingEncoding);
-        if (uMist > 0.0) {
+        if (uMistAmount > 0.0) {
             // 柔光镜：亮部的光被散射到四周 → 高光外扩、暗部被轻微灌亮、反差下降
-            vec3 m = texture(uMist, vUv).rgb;
-            lin = lin * (1.0 - 0.25 * uMist) + m * (0.9 * uMist);
+            vec3 m = texture(uMistTex, vUv).rgb;
+            lin = lin * (1.0 - 0.25 * uMistAmount) + m * (0.9 * uMistAmount);
         }
-        if (uHalation > 0.0) {
+        if (uHalationAmount > 0.0) {
             // 光晕：强光穿透乳剂、被片基反射回来，再次曝光最底下的红色感光层 → 高光边缘一圈红橙
-            vec3 h = texture(uHalation, vUv).rgb;
+            vec3 h = texture(uHalationTex, vUv).rgb;
             float energy = max(h.r, max(h.g, h.b));
-            lin += vec3(1.0, 0.28, 0.08) * energy * (2.2 * uHalation);
+            lin += vec3(1.0, 0.28, 0.08) * energy * (2.2 * uHalationAmount);
         }
         sig = encodeSignal(lin, uWorkingEncoding);
     }

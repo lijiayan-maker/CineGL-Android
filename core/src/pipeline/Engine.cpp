@@ -199,8 +199,8 @@ struct Engine::Impl {
         film.use();
         film.setMat4("uTexMatrix", uvMatrix.m.data());
         film.bindTexture("uInput", kUnitInput, GL_TEXTURE_2D, signalTex);
-        film.bindTexture("uHalation", kUnitHalation, GL_TEXTURE_2D, halationTex ? halationTex : signalTex);
-        film.bindTexture("uMist", kUnitMist, GL_TEXTURE_2D, mistTex ? mistTex : signalTex);
+        film.bindTexture("uHalationTex", kUnitHalation, GL_TEXTURE_2D, halationTex ? halationTex : signalTex);
+        film.bindTexture("uMistTex", kUnitMist, GL_TEXTURE_2D, mistTex ? mistTex : signalTex);
         film.bindTexture("uNeutralLut", kUnitNeutralLut, GL_TEXTURE_3D, neutral.texture());
         film.setFloat("uNeutralLutSize", static_cast<float>(neutral.size()));
         const gl::Lut3D* lut = look ? look : &neutral;
@@ -208,8 +208,8 @@ struct Engine::Impl {
         film.setFloat("uLookLutSize", static_cast<float>(lut->size()));
         film.setFloat("uLookStrength", look ? lookStrength : 0.f);
         film.setInt("uWorkingEncoding", static_cast<int>(p.workingEncoding));
-        film.setFloat("uHalation", effects && halationTex ? p.halation : 0.f);
-        film.setFloat("uMist", effects && mistTex ? p.mist : 0.f);
+        film.setFloat("uHalationAmount", effects && halationTex ? p.halation : 0.f);
+        film.setFloat("uMistAmount", effects && mistTex ? p.mist : 0.f);
         film.setFloat("uGrain", effects ? p.grain : 0.f);
         film.setFloat("uGrainSize", plan::grainSizePixels(p.grainSize, fw, fh));
         film.setVec2("uFrameSize", static_cast<float>(fw), static_cast<float>(fh));
@@ -388,7 +388,7 @@ void Engine::present(const PresentParams& pp, const RenderParams& p, float timeS
     prog.setFloat("uZebraThreshold", p.zebraThreshold);
     prog.setInt("uPeaking", p.peaking ? 1 : 0);
     prog.setFloat("uTime", timeSeconds);
-    const auto rect = wave ? plan::waveformRect(static_cast<float>(w), static_cast<float>(h))
+    const auto rect = wave ? plan::waveformRect(static_cast<float>(w), static_cast<float>(h), pp.overlayTopInset)
                            : std::array<float, 4>{0.f, 0.f, 0.f, 0.f};
     prog.setVec4("uWaveformRect", rect[0], rect[1], rect[2], rect[3]);
     d.quad.draw();

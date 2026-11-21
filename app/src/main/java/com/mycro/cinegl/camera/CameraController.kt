@@ -97,6 +97,13 @@ class CameraController(context: Context) {
     @SuppressLint("MissingPermission")
     suspend fun open(id: String): CameraCaps = suspendCancellableCoroutine { cont ->
         val c = CameraCaps.from(id, manager.getCameraCharacteristics(id))
+        Log.i(
+            TAG,
+            "open camera $id: front=${c.front} level=${c.hardwareLevel} manualSensor=${c.manualSensor} " +
+                "manualPost=${c.manualPostProcessing} tonemapCurve=${c.tonemapCurve}/${c.maxCurvePoints} " +
+                "iso=${c.isoRange} exp=${c.exposureRange} focus=${c.minFocusDiopters} zoom=${c.zoomRange} " +
+                "fps=${c.fpsRanges} realtimeTs=${c.timestampRealtime}",
+        )
         manager.openCamera(id, executor, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 device = camera

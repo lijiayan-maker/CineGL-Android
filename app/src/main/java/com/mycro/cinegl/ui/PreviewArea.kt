@@ -71,7 +71,8 @@ fun PreviewArea(state: CameraUiState, vm: CameraViewModel, modifier: Modifier = 
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current
     val radiusPx = with(density) { 16.dp.toPx() }
-    LaunchedEffect(radiusPx) { vm.setCornerRadius(radiusPx) }
+    val chipRowPx = with(density) { 40.dp.toPx() }   // 左上角角标那一行（含上边距）的高度
+    LaunchedEffect(radiusPx, chipRowPx) { vm.setOverlayMetrics(radiusPx, chipRowPx) }
     val frame = remember(boxSize, state.frameWidth, state.frameHeight) {
         FrameFit.fit(state.frameWidth.toFloat(), state.frameHeight.toFloat(), boxSize.width.toFloat(), boxSize.height.toFloat())
     }

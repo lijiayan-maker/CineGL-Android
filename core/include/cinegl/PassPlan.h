@@ -35,7 +35,7 @@ Size waveformSourceSize(int frameW, int frameH);
 constexpr Size kWaveformTarget{256, 128};
 
 /** 波形图在预览视口里的位置（uv，左下原点）：x0, y0, x1, y1，放在右上角。 */
-std::array<float, 4> waveformRect(float viewW, float viewH);
+std::array<float, 4> waveformRect(float viewW, float viewH, float topInsetPx = 0.f);
 
 /** 缩略图图集：columns 列，行数向上取整。 */
 Size thumbnailAtlasSize(int count, int thumbW, int thumbH, int columns);

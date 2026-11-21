@@ -203,6 +203,7 @@ class VideoRecorder(private val context: Context) {
         var pts = info.presentationTimeUs - basePtsUs
         if (pts < 0) return   // 第一帧视频之前的声音
         val last = if (isAudio) lastAudioPtsUs else lastVideoPtsUs
+        if (last < 0) Log.d(TAG, "first ${if (isAudio) "audio" else "video"} sample: raw=${info.presentationTimeUs}us base=${basePtsUs}us")
         if (pts <= last) pts = last + 1   // muxer 要求同一轨时间戳严格递增
         if (isAudio) lastAudioPtsUs = pts else lastVideoPtsUs = pts
         buffer.position(info.offset)
@@ -216,6 +217,7 @@ class VideoRecorder(private val context: Context) {
      * 成功返回相册里的 Uri。
      */
     fun stop(): Uri? {
+        Log.d(TAG, "stop: last video pts=${lastVideoPtsUs}us, last audio pts=${lastAudioPtsUs}us")
         runCatching { video?.signalEndOfInputStream() }
         synchronized(audioLock) {
             audioEnded = true

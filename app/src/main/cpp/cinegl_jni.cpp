@@ -188,11 +188,6 @@ JNI_FN(jfloatArray, cineLogCurve)(JNIEnv* env, jobject, jint points) {
     return toJava(env, out.data(), out.size());
 }
 
-JNI_FN(jfloatArray, waveformRect)(JNIEnv* env, jobject, jfloat viewW, jfloat viewH) {
-    const auto r = plan::waveformRect(viewW, viewH);
-    return toJava(env, r.data(), 4);
-}
-
 // ================================================================ GL 引擎（必须在 GL 线程）
 
 JNI_FN(jlong, engineCreate)(JNIEnv*, jobject) { return reinterpret_cast<jlong>(new Engine()); }
@@ -233,12 +228,13 @@ JNI_FN(void, engineRenderFrame)
 
 JNI_FN(void, enginePresent)
 (JNIEnv* env, jobject, jlong h, jint viewW, jint viewH, jfloat x, jfloat y, jfloat w, jfloat hh, jfloat radius,
- jfloatArray params, jfloat time) {
+ jfloat topInset, jfloatArray params, jfloat time) {
     PresentParams pp;
     pp.viewWidth = viewW;
     pp.viewHeight = viewH;
     pp.frameRect = {x, y, w, hh};
     pp.cornerRadius = radius;
+    pp.overlayTopInset = topInset;
     engine(h)->present(pp, unpack(env, params), time);
 }
 

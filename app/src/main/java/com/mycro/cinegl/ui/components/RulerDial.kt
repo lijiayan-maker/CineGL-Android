@@ -76,6 +76,7 @@ fun RulerDial(
                 val halfTicks = (center / spacingPx).toInt() + 2
                 val first = ceil((value - halfTicks * step) / step).toInt()
                 val last = floor((value + halfTicks * step) / step).toInt()
+                var lastLabelRight = Float.NEGATIVE_INFINITY
                 for (i in first..last) {
                     val tickValue = i * step
                     if (tickValue < range.start - step * 0.01f || tickValue > range.endInclusive + step * 0.01f) continue
@@ -97,7 +98,12 @@ fun RulerDial(
                             tickLabel(tickValue),
                             TextStyle(color = Color.White.copy(alpha = alpha * 0.8f), fontSize = 9.sp),
                         )
-                        drawText(layout, topLeft = Offset(x - layout.size.width / 2f, 24.dp.toPx()))
+                        val left = x - layout.size.width / 2f
+                        // 标签太长（比如 1/16384）就隔一个画一个，避免挤成一团
+                        if (left > lastLabelRight + 6.dp.toPx()) {
+                            drawText(layout, topLeft = Offset(left, 24.dp.toPx()))
+                            lastLabelRight = left + layout.size.width
+                        }
                     }
                 }
                 // 中心指针

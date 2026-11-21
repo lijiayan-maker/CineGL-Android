@@ -39,13 +39,14 @@ Size waveformSourceSize(int frameW, int frameH) {
     return {w, h};
 }
 
-std::array<float, 4> waveformRect(float viewW, float viewH) {
+std::array<float, 4> waveformRect(float viewW, float viewH, float topInsetPx) {
     if (viewW <= 0.f || viewH <= 0.f) return {0.f, 0.f, 0.f, 0.f};
     const float margin = 0.03f * viewW;
     const float w = 0.42f * viewW;
     const float h = w * 0.5f;
     const float x1 = 1.f - margin / viewW;
-    const float y1 = 1.f - margin / viewH;
+    // 顶部留出 UI 角标那一行（LOG / LUT 烧录 / 影调名）的高度，别压在一起
+    const float y1 = 1.f - (margin + topInsetPx) / viewH;
     return {x1 - w / viewW, y1 - h / viewH, x1, y1};
 }
 

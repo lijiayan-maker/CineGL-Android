@@ -100,7 +100,6 @@ object CineCore {
     external fun whiteBalanceGains(kelvin: Float, tint: Float): FloatArray
     /** Camera2 TONEMAP_CURVE 用的 CineLog 曲线：(Pin, Pout) 交错。 */
     external fun cineLogCurve(points: Int): FloatArray
-    external fun waveformRect(viewW: Float, viewH: Float): FloatArray
 
     // ---- GL 引擎 ----
     external fun engineCreate(): Long
@@ -116,7 +115,7 @@ object CineCore {
     )
     external fun enginePresent(
         handle: Long, viewW: Int, viewH: Int, x: Float, y: Float, w: Float, h: Float, cornerRadius: Float,
-        params: FloatArray, time: Float,
+        topInset: Float, params: FloatArray, time: Float,
     )
     external fun engineDrawToSurface(handle: Long, plane: Int, matrix: FloatArray, width: Int, height: Int)
     external fun engineProcessStill(

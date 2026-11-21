@@ -100,6 +100,8 @@ class RenderEngine {
 
     @Volatile var params = RenderParams()
     @Volatile var cornerRadiusPx = 0f
+    /** 画面顶部被 UI 角标占用的高度（像素），波形图要让开。 */
+    @Volatile var overlayTopInsetPx = 0f
     @Volatile var listener: Listener? = null
 
     fun start() = handler.post {
@@ -289,17 +291,21 @@ class RenderEngine {
             val time = (System.nanoTime() - startNanos) / 1e9f
             CineCore.enginePresent(
                 engine, screenWidth, screenHeight, rect.left, rect.top, rect.width(), rect.height(),
-                cornerRadiusPx, packed, time,
+                cornerRadiusPx, overlayTopInsetPx, packed, time,
             )
             core.swapBuffers(s)
         }
 
-        if (thumbnailsEnabled && frameIndex % THUMBNAIL_INTERVAL == 0) renderThumbnails(geo)
+        // 影调面板开着：所有影调高频刷新；关着：只给底部的影调按钮低频刷新当前这一个
+        if (thumbnailsEnabled && frameIndex % THUMBNAIL_INTERVAL == 0) {
+            renderThumbnails(geo, lutBank.readyLooks)
+        } else if (!thumbnailsEnabled && frameIndex % IDLE_THUMBNAIL_INTERVAL == 0 && selectedLook in lutBank.readyLooks) {
+            renderThumbnails(geo, listOf(selectedLook))
+        }
         frameIndex++
     }
 
-    private fun renderThumbnails(geo: FrameGeometry) {
-        val looks = lutBank.readyLooks
+    private fun renderThumbnails(geo: FrameGeometry, looks: List<Int>) {
         if (looks.isEmpty()) return
         val tw = THUMB_WIDTH
         val th = (tw * geo.height / geo.width).coerceIn(tw / 2, tw * 2)
@@ -356,6 +362,7 @@ class RenderEngine {
     private companion object {
         const val TAG = "CineGL"
         const val THUMBNAIL_INTERVAL = 6
+        const val IDLE_THUMBNAIL_INTERVAL = 45
         const val THUMB_WIDTH = 132
         const val THUMB_COLUMNS = 4
     }
