@@ -139,11 +139,11 @@ fun ToolButton(
     selected: Boolean,
     manual: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val tint by animateColorAsState(if (selected) CineColors.Accent else CineColors.TextPrimary, label = "toolTint")
     Column(
-        Modifier
-            .width(66.dp)
+        modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 6.dp),
@@ -163,6 +163,32 @@ fun ToolButton(
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
+        )
+    }
+}
+
+/** 工具栏末尾的「重置」：有手动参数时可点，一点全部回到自动；都在自动时置灰。 */
+@Composable
+fun ResetToolButton(enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val tint by animateColorAsState(
+        if (enabled) CineColors.TextPrimary else CineColors.TextSecondary.copy(alpha = 0.35f),
+        label = "resetTint",
+    )
+    Column(
+        modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.height(22.dp), contentAlignment = Alignment.Center) {
+            Icon(CineIcons.Reset, null, tint = tint, modifier = Modifier.size(20.dp))
+        }
+        Text(
+            "重置",
+            color = if (enabled) CineColors.TextSecondary else tint,
+            fontSize = 10.sp,
+            modifier = Modifier.padding(top = 2.dp),
         )
     }
 }

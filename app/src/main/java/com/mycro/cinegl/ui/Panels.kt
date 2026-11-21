@@ -45,7 +45,14 @@ import com.mycro.cinegl.ui.components.SettingSwitch
 import com.mycro.cinegl.ui.theme.CineColors
 
 @Composable
-private fun PanelScaffold(title: String, trailing: String?, onClose: () -> Unit, modifier: Modifier, content: @Composable () -> Unit) {
+private fun PanelScaffold(
+    title: String,
+    trailing: String?,
+    onClose: () -> Unit,
+    modifier: Modifier,
+    action: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
     Column(
         modifier
             .fillMaxWidth()
@@ -61,6 +68,7 @@ private fun PanelScaffold(title: String, trailing: String?, onClose: () -> Unit,
                 Text("  ·  $trailing", color = CineColors.TextSecondary, fontSize = 13.sp)
             }
             Spacer(Modifier.weight(1f))
+            action?.invoke()
             RoundIconButton(CineIcons.Close, onClick = onClose)
         }
         content()
@@ -75,7 +83,13 @@ fun LookPanel(
     onImport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PanelScaffold("影调", state.currentLook?.name, vm::closePanels, modifier) {
+    PanelScaffold(
+        "影调",
+        state.currentLook?.name,
+        vm::closePanels,
+        modifier,
+        action = { ResetAction(enabled = state.effects != Effects(), onClick = vm::resetEffects) },
+    ) {
         LazyRow(
             Modifier.padding(top = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -100,18 +114,24 @@ fun LookPanel(
             LabeledSlider("颗粒大小", fx.grainSize) { v -> vm.setEffects { it.copy(grainSize = v) } }
             LabeledSlider("暗角", fx.vignette) { v -> vm.setEffects { it.copy(vignette = v) } }
             LabeledSlider("色散", fx.aberration) { v -> vm.setEffects { it.copy(aberration = v) } }
-            Row(
-                Modifier
-                    .padding(top = 4.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = vm::resetEffects)
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(CineIcons.Reset, null, tint = CineColors.TextSecondary, modifier = Modifier.size(16.dp))
-                Text("  效果恢复默认", color = CineColors.TextSecondary, fontSize = 12.sp)
-            }
         }
+    }
+}
+
+/** 面板标题栏的「重置」：放在标题栏而不是滑块列表底部，不用滚动就能找到；都是默认值时置灰。 */
+@Composable
+private fun ResetAction(enabled: Boolean, onClick: () -> Unit) {
+    val color = if (enabled) CineColors.TextPrimary else CineColors.TextSecondary.copy(alpha = 0.35f)
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(CineIcons.Reset, null, tint = color, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text("重置", color = color, fontSize = 13.sp)
     }
 }
 

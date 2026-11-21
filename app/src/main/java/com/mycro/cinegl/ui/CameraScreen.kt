@@ -14,7 +14,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -58,6 +56,7 @@ import com.mycro.cinegl.ui.components.AutoButton
 import com.mycro.cinegl.ui.components.CineIcons
 import com.mycro.cinegl.ui.components.GalleryButton
 import com.mycro.cinegl.ui.components.LookButton
+import com.mycro.cinegl.ui.components.ResetToolButton
 import com.mycro.cinegl.ui.components.RoundIconButton
 import com.mycro.cinegl.ui.components.RulerDial
 import com.mycro.cinegl.ui.components.ShutterButton
@@ -188,13 +187,8 @@ private fun ToolRow(state: CameraUiState, vm: CameraViewModel) {
     val c = state.controls
     val r = state.readout
     val caps = state.caps
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ) {
+    // 按权重平分宽度：384dp 的窄屏也放得下 5 个工具 + 重置，不需要横向滚动
+    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)) {
         Tool.entries.forEach { tool ->
             val (value, manual) = when (tool) {
                 Tool.FOCUS -> (if (c.focusAuto) (if (r.afLocked) "AF-L" else "AF") else formatFocus(c.focusDiopters)) to !c.focusAuto
@@ -217,8 +211,10 @@ private fun ToolRow(state: CameraUiState, vm: CameraViewModel) {
                 selected = state.activeTool == tool,
                 manual = manual,
                 onClick = { vm.toggleTool(tool) },
+                modifier = Modifier.weight(1f),
             )
         }
+        ResetToolButton(enabled = state.canResetControls, onClick = vm::resetControls, modifier = Modifier.weight(0.8f))
     }
 }
 

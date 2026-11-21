@@ -86,4 +86,7 @@ data class CameraUiState(
 ) {
     val logOn: Boolean get() = logMode != LogMode.OFF
     val currentLook: LookInfo? get() = looks.getOrNull(lookIndex)
+
+    /** 一键重置是否可用：有手动参数，或点击对焦锁定了对焦/测光区域。 */
+    val canResetControls: Boolean get() = controls.hasManual || focusPoint != null
 }

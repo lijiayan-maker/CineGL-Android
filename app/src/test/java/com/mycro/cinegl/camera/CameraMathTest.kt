@@ -2,7 +2,9 @@ package com.mycro.cinegl.camera
 
 import com.mycro.cinegl.core.FrameGeometry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** 相机侧的纯逻辑（不碰 Android 类），JVM 上直接跑：./gradlew :app:testDebugUnitTest */
@@ -46,6 +48,35 @@ class CameraMathTest {
     fun fullyManualIgnoresMetering() {
         val c = CameraControls(isoAuto = false, iso = 800, shutterAuto = false, exposureNs = 4_000_000L, evIndex = 6)
         assertEquals(800 to 4_000_000L, resolveExposure(c, isoMin, isoMax, expMin, expMax, 1.0, 1f / 3f))
+    }
+
+    // —— 一键重置 ——
+
+    @Test
+    fun resetReturnsToAutoButKeepsFraming() {
+        val manual = CameraControls(
+            isoAuto = false, iso = 800, shutterAuto = false, exposureNs = 4_000_000L, evIndex = -3,
+            focusAuto = false, focusDiopters = 2f, wbAuto = false, kelvin = 3200f, tint = 0.4f,
+            zoom = 2f, torch = true, stabilization = true,
+        )
+        assertTrue(manual.hasManual)
+        val reset = manual.resetToAuto()
+        assertFalse(reset.hasManual)
+        // 曝光、对焦、白平衡回到初始值；变焦、补光、防抖保留
+        assertEquals(CameraControls(zoom = 2f, torch = true, stabilization = true), reset)
+    }
+
+    @Test
+    fun anySingleManualControlEnablesReset() {
+        val auto = CameraControls()
+        assertFalse(auto.hasManual)
+        assertTrue(auto.copy(isoAuto = false).hasManual)
+        assertTrue(auto.copy(shutterAuto = false).hasManual)
+        assertTrue(auto.copy(evIndex = 1).hasManual)
+        assertTrue(auto.copy(focusAuto = false).hasManual)
+        assertTrue(auto.copy(wbAuto = false).hasManual)
+        // 自动白平衡下残留的色温/色调、变焦和补光都不算手动参数
+        assertFalse(auto.copy(kelvin = 3200f, tint = 0.5f, zoom = 3f, torch = true).hasManual)
     }
 
     private val sizes = listOf(

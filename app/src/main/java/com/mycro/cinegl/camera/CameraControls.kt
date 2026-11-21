@@ -23,6 +23,12 @@ data class CameraControls(
     val stabilization: Boolean = false,
 ) {
     val exposureAuto: Boolean get() = isoAuto && shutterAuto
+
+    /** 是否有哪一项不在自动。自动白平衡下残留的色温/色调只是下次切手动的起点，不算手动。 */
+    val hasManual: Boolean get() = !isoAuto || !shutterAuto || evIndex != 0 || !focusAuto || !wbAuto
+
+    /** 一键重置：曝光、对焦、白平衡回到自动并恢复初始值；变焦、补光、防抖属于取景和设备状态，保留。 */
+    fun resetToAuto() = CameraControls(zoom = zoom, torch = torch, stabilization = stabilization)
 }
 
 /** 相机实际在用的参数（从 CaptureResult 读回来，自动模式下给 UI 显示）。 */

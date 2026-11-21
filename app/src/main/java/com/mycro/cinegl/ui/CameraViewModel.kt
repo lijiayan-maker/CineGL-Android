@@ -262,7 +262,11 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
         pushRenderParams()
     }
 
-    fun resetEffects() = setEffects { Effects(lookStrength = it.lookStrength) }
+    /** 影调面板的「重置」：影调强度和胶片效果恢复默认，选中的影调不变。 */
+    fun resetEffects() {
+        setEffects { Effects() }
+        toast("影调强度与效果已恢复默认")
+    }
 
     fun importCube(uri: Uri) {
         viewModelScope.launch {
@@ -358,6 +362,14 @@ class CameraViewModel(app: Application) : AndroidViewModel(app), RenderEngine.Li
             }
         }
         if (tool == Tool.FOCUS && auto) camera.resetFocus()
+    }
+
+    /** 一键重置：对焦、白平衡、ISO、快门、曝光补偿全部回到自动，并取消点击对焦锁定的区域。 */
+    fun resetControls() {
+        updateControls { it.resetToAuto() }
+        camera.resetFocus()
+        _state.update { it.copy(focusPoint = null) }
+        toast("参数已恢复自动")
     }
 
     fun tapToFocus(frameX: Float, frameY: Float) {
