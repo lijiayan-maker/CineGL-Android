@@ -1,5 +1,7 @@
 # CineGL（Android）
 
+简体中文 | [English](README.en.md)
+
 电影感相机 App，同时也是一个 **OpenGL ES 3.0 渲染滤镜** 的学习项目。相机画面经过一条完整的 GPU 管线（镜头 → 胶片曝光 → 冲洗调色 → 颗粒），实时预览、录像、拍照共用同一套渲染。
 
 渲染核心用 C++ 编写（`core/`），可以脱离手机在电脑上单测；Android 壳层（`app/`）负责 Camera2、EGL、MediaCodec 与 Compose 界面，通过一层很薄的 JNI 调用核心。
@@ -34,6 +36,8 @@
 | 长按 | 取消点击对焦，恢复连续对焦 |
 | 双指缩放 | 变焦。设备支持多档变焦时，画面底部显示 35mm 等效焦距按钮（如 24 / 49 / 73 mm） |
 
+**界面语言**：跟随系统。系统为简体中文时显示中文，其他语言（包括繁体中文）一律显示英文。
+
 > 截图来自 Android 模拟器，见[截图说明](#截图说明)。
 
 ## 功能
@@ -50,7 +54,7 @@
 
 - 点击右下角的影调按钮打开面板。每张卡片都是该影调作用在**实时画面**上的缩略图。
 - **影调强度**：0–10 连续可调，0 表示不套用影调。
-- **导入 .cube**：位于卡片列表末尾。支持 3D LUT（`LUT_3D_SIZE` 2–256，可带 `DOMAIN_MIN` / `DOMAIN_MAX`），不支持 1D LUT。导入的 LUT 以 Rec.709 画面为输入，开启 Log 时会先把 Log 转回 Rec.709 再套用，所以同一个 LUT 在两种模式下效果一致。导入后卡片右上角标 `LUT`，文件复制到应用私有目录，下次启动自动加载。
+- **导入 .cube**：位于卡片列表末尾。支持 3D LUT（`LUT_3D_SIZE` 2–256，可带 `DOMAIN_MIN` / `DOMAIN_MAX`），不支持 1D LUT。导入的 LUT 以 Rec.709 画面为输入，开启 Log 时会先把 Log 转回 Rec.709 再套用，所以同一个 LUT 在两种模式下效果一致。导入后卡片右上角标 `LUT`，文件复制到应用私有目录，下次启动自动加载。文件无法解析时，提示里会写明原因（例如第几行格式不对）。
 - **重置**（面板标题栏）：影调强度与胶片效果恢复默认，所选影调不变。全部为默认值时置灰。
 
 ### 胶片效果
@@ -181,9 +185,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS；其他系统指向�
 
 | 命令 | 内容 | 运行环境 |
 |---|---|---|
-| `core/scripts/run_host_tests.sh` | C++ 核心单测：CineLog 曲线、色彩数学、影调烘焙、`.cube` 解析、画面几何（裁切 / 旋转 / 镜像 / 输出方向）、pass 规划、着色器嵌入 | macOS / Linux，无需设备 |
+| `core/scripts/run_host_tests.sh` | C++ 核心单测：CineLog 曲线、色彩数学、影调烘焙、`.cube` 解析（含各类错误的错误码）、画面几何（裁切 / 旋转 / 镜像 / 输出方向）、pass 规划、着色器嵌入 | macOS / Linux，无需设备 |
 | `core/scripts/validate_shaders.sh` | 展开 `#include` 后用 NDK 自带的 `glslc` 编译全部 GLSL，提前发现 uniform 重名、类型错误等问题 | macOS / Linux，无需设备 |
-| `./gradlew :app:testDebugUnitTest` | Kotlin 单测：半自动曝光推算、一键重置、流尺寸选择、变焦预设、朝向吸附、点击对焦坐标换算 | JVM |
+| `./gradlew :app:testDebugUnitTest` | Kotlin 单测：半自动曝光推算、一键重置、流尺寸选择、变焦预设、朝向吸附、点击对焦坐标换算、影调名随界面语言切换、双语文案检查（中英文的键与占位符一致，代码里没有硬编码的中文） | JVM |
 
 ## 架构
 
@@ -235,11 +239,12 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS；其他系统指向�
 | `app/src/main/java/com/mycro/cinegl/record/` | 录像、音频采集 |
 | `app/src/main/java/com/mycro/cinegl/media/` | 写入系统相册 |
 | `app/src/main/java/com/mycro/cinegl/ui/` | Compose 界面与 ViewModel |
-| `docs/` | 原理与设计取舍、截图 |
+| `app/src/main/res/values*/` | 界面文案：默认英文，简体中文在 `values-b+zh+Hans` |
+| `docs/` | 原理与设计取舍、截图（英文界面截图在 `docs/images/en/`） |
 
 ## 截图说明
 
-本文截图均来自 Android 模拟器：
+本文截图均来自 Android 模拟器，App 语言为简体中文（[英文版 README](README.en.md) 使用英文界面的截图）：
 
 ```bash
 emulator -avd <AVD 名> -camera-back virtualscene -camera-front emulated
@@ -260,4 +265,4 @@ emulator -avd <AVD 名> -camera-back virtualscene -camera-front emulated
 
 ## 进一步阅读
 
-- [docs/原理与设计取舍.md](docs/原理与设计取舍.md)：每一步为什么这样做、踩过的坑和放弃的方案，附练习题。
+- [docs/原理与设计取舍.md](docs/原理与设计取舍.md)：每一步为什么这样做、踩过的坑和放弃的方案，附练习题。英文版见 [docs/design-notes.md](docs/design-notes.md)。
